@@ -28,7 +28,10 @@ public final class MixinCloner {
     public static GeneratedMixin clone(ClassNode source, String mixinPackage, String target, boolean relax) {
         String name = source.name + "$MixinWeaver$" + UUID.nameUUIDFromBytes((source.name + "#" + target).getBytes(StandardCharsets.UTF_8)).toString().replace("-", "");
         ClassNode clone = new ClassNode();
-        source.accept(new ClassRemapper(clone, new SimpleRemapper(source.name, name)));
+        // ASM 9.9 起才支持传入 API 版本，早期加载器需要两参数构造函数。
+        @SuppressWarnings({ "deprecation", "RedundantSuppression" })
+        var remapper = new SimpleRemapper(source.name, name);
+        source.accept(new ClassRemapper(clone, remapper));
         if ((clone.access & Opcodes.ACC_INTERFACE) != 0) {
             convertInterface(clone);
         }
