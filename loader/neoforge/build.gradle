@@ -3,12 +3,11 @@ plugins {
     id 'org.jetbrains.kotlin.jvm'
     id 'eclipse'
     id 'idea'
+    id 'maven-publish'
     alias libs.plugins.modDevGradle
+    //alias libs.plugins.shadow
     alias libs.plugins.lombok
 }
-
-// Loader 与发行模块的 Gradle 项目名相同，使用 Maven 分组区分构件坐标。
-group = "${rootProject.group}.loader"
 
 sourceSets {
     // 将数据生成器的产物加入主资源集。
@@ -53,12 +52,33 @@ configurations {
     renderNurseCfg {
         canBeConsumed = false
     }
+
+    bundledJars {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    bundledSources {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    // 发行包收录平台自身和共享模块，Minecraft 和 Mixin 由 Loader 提供。
+    [':api', ':core'].each { module ->
+        bundledJars(project(path: module, configuration: 'runtimeElements'))
+        bundledSources(project(path: module, configuration: 'sourcesElements'))
+    }
 }
 
 apply from: "$rootDir/gradle/scripts/moddevgradle.gradle"
 apply from: "$rootDir/gradle/scripts/repositories.gradle"
 apply from: "$rootDir/dependencies.gradle"
 apply from: "$rootDir/gradle/scripts/resources.gradle"
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
 
 // 平台发行的源码包使用 delombok 处理后的文件。
 sourcesJar {

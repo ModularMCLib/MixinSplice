@@ -2,4 +2,4 @@ plugins {
     id 'base'
 }
 
-description = 'Fabric loader integration'
+description = 'Fabric 平台接入与发行'

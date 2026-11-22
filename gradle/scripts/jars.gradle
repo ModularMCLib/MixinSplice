@@ -6,17 +6,18 @@ def includeModuleJars = { Jar archive ->
     archive.from { bundledJars.collect { zipTree(it) } }
 }
 
-tasks.named('jar', Jar) { archive ->
+def mainArchive = tasks.named('jar', Jar) { archive ->
     exclude "**/.cache"
     includeModuleJars(archive)
 }
 
-tasks.register('slimJar', Jar) { archive ->
+def slimArchive = tasks.register('slimJar', Jar) { archive ->
     archiveClassifier = "slim"
+    from sourceSets.main.output
     includeModuleJars(archive)
 }
 
-sourcesJar {
+def sourcesArchive = tasks.named('sourcesJar', Jar) {
     dependsOn(bundledSources)
     from { bundledSources.collect { zipTree(it) } }
 }
@@ -26,8 +27,8 @@ base {
     archivesName = "${rootProject.name}-${project.name}--${libs.versions.minecraft.get()}"
 }
 
-afterEvaluate {
-    tasks.withType(Jar).configureEach {
+[mainArchive, slimArchive, sourcesArchive].each { archive ->
+    archive.configure {
         destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
         duplicatesStrategy = DuplicatesStrategy.FAIL
         manifest.attributes([

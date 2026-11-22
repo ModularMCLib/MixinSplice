@@ -13,11 +13,12 @@ MixinWeaver 是 SpongePowered Mixin 的扩展，计划提供动态目标发现�
 ```powershell
 .\gradlew.bat projects
 .\gradlew.bat build
-.\gradlew.bat :distribution:neoforge:slimJar
+.\gradlew.bat :loader:neoforge:slimJar
 ```
 
-NeoForge 的主 JAR 和源码 JAR 输出到 `build/libs/`。上面的独立任务生成 slim JAR。
-`runClient` 和 `runGameTestServer` 等开发任务由 `:loader:neoforge` 提供。
+NeoForge 的模组入口、开发运行和发行打包位于 `:loader:neoforge`，包括 `runClient` 和 `runGameTestServer`。
+主 JAR 和源码 JAR 输出到 `build/libs/`，上面的独立任务生成 slim JAR。
+主 JAR 的文件名形如 `MixinWeaver-neoforge--1.21.1-0.0.3.jar`。
 当前 GameTest 服务端可以发现模组，随后因没有测试用例报告 `No test functions were given!`。
 
 ## English
@@ -36,12 +37,12 @@ to select the Gradle cache location.
 ```powershell
 .\gradlew.bat projects
 .\gradlew.bat build
-.\gradlew.bat :distribution:neoforge:slimJar
+.\gradlew.bat :loader:neoforge:slimJar
 ```
 
-The NeoForge distribution writes its main and source JARs to `build/libs/`.
-The slim JAR is built by the separate task above.
-NeoForge development tasks, including `runClient` and `runGameTestServer`,
-are defined in `:loader:neoforge`.
+`:loader:neoforge` contains the mod entry points, development runs such as
+`runClient` and `runGameTestServer`, and release packaging.
+The main and sources JARs go to `build/libs/`. The separate task above builds
+the slim JAR. A main JAR is named `MixinWeaver-neoforge--1.21.1-0.0.3.jar`.
 The current GameTest server reaches mod discovery and reports
 `No test functions were given!` until GameTest cases are added.

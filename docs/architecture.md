@@ -10,15 +10,13 @@ MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标发现、跨 Mixin �
 | --- | --- | --- |
 | `:api` | 公开扩展契约和稳定的数据模型 | Java 库模块 |
 | `:core` | 注册、排序、生命周期、诊断、子系统规则和 Mixin 对接 | Java 库模块，依赖 API，编译期使用 Mixin |
-| `:loader:fabric`、`:loader:forge` | 在对应 Loader 上启动共享 Mixin 集成 | Gradle 模块结构 |
-| `:loader:neoforge` | NeoForge 入口、模组元数据、开发运行与 GameTest | 已迁入现有 NeoForge 模板 |
-| `:distribution:fabric`、`:distribution:forge` | 为对应 Loader 组装可安装发行物 | Gradle 模块结构 |
-| `:distribution:neoforge` | 组装平台资源和 MixinWeaver 各模块的 JAR | 已接通主 JAR、源码 JAR 和独立的 slim JAR |
+| `:loader:fabric`、`:loader:forge` | 对应平台的启动接入、开发运行和发行 | Gradle 模块结构 |
+| `:loader:neoforge` | NeoForge 入口、模组元数据、开发运行、GameTest 和发行 | 使用 ModDevGradle，生成主 JAR、源码 JAR 和独立的 slim JAR |
 | `:tests` | 单元、字节码、Mixin 生命周期和集成测试 | JVM 测试项目，NeoForge GameTest 由 Loader 模块运行 |
 
 依赖方向为 `Loader → Core → API`。公开 API 保持 Loader 独立，ASM 与 Mixin 的内部对象由 Core 管理。`com.modularmclib.mixinweaver.core.mixins` 是 Mixin 配置加载注入类的包。版本目录锁定 Mixin `0.8.7`，NeoForge 开发环境使用暴露相同 API 版本的发行包。未来更新先验证所用的 Mixin 接口和执行时机，再更新锁定版本。历史兼容层和 MixinExtras 在此设计范围之外。
 
-项目显示名为 **MixinWeaver**，Mod ID 为 `mixinweaver`，Java 命名空间为 `com.modularmclib.mixinweaver`。当前 NeoForge 模板目标为 Minecraft `1.21.1` 和 Java 21。发行项目显式组装 API、Core 和 NeoForge Loader，Minecraft、Mixin 和平台依赖由运行环境提供。
+项目显示名为 **MixinWeaver**，Mod ID 为 `mixinweaver`，Java 命名空间为 `com.modularmclib.mixinweaver`。当前 NeoForge 模板目标为 Minecraft `1.21.1` 和 Java 21。NeoForge 平台模块将自身产物与 API、Core 一同打包，Minecraft、Mixin 和平台依赖由运行环境提供。公共打包脚本用平台子项目名作为 Loader 标识，按 `MixinWeaver-<loader>--<minecraft>-<version>.jar` 命名。
 
 ## Mixin 生命周期
 

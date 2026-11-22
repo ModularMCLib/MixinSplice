@@ -36,5 +36,4 @@ rootProject.name = mod_name
 
 include 'api', 'core'
 include 'loader:fabric', 'loader:forge', 'loader:neoforge'
-include 'distribution:fabric', 'distribution:forge', 'distribution:neoforge'
 include 'tests'
