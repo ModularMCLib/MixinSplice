@@ -1,3 +1,5 @@
+jarJar.disableDefaultSources()
+
 configurations {
     bundledSources {
         canBeConsumed = false
@@ -7,32 +9,42 @@ configurations {
 }
 
 dependencies {
-    [':api', ':core'].each { module ->
-        bundledSources(project(path: module, configuration: 'sourcesElements'))
-    }
+    jarJar project(path: ':core', configuration: 'commonElements')
+
+    bundledSources project(path: ':core', configuration: 'sourcesElements')
 }
 
 def bundledSources = configurations.bundledSources
 
 tasks.named('processResources', ProcessResources) {
-    // 将共享输出合入平台模组，使开发运行与发行包使用相同的类和资源。
-    from project(':api').sourceSets.main.output
-    from project(':core').sourceSets.main.output
     duplicatesStrategy = DuplicatesStrategy.FAIL
+    // 平台包注册同一份初始化配置，插件类由 JarJar 中的共享库提供。
+    from(project(':core').sourceSets.main.resources) {
+        include "${mod_id}.mixins.json"
+    }
 }
 
-def mainArchive = tasks.named('jar', Jar) { archive ->
+def mainArchive = tasks.named('jarJar', Jar) {
+    archiveClassifier = ''
+    from sourceSets.main.output
     exclude "**/.cache"
 }
 
-def slimArchive = tasks.register('slimJar', Jar) { archive ->
+def slimArchive = tasks.register('slimJar', Jar) {
     archiveClassifier = "slim"
     from sourceSets.main.output
+    dependsOn mainArchive
+    from({ zipTree(mainArchive.get().archiveFile.get().asFile) }) {
+        include 'META-INF/jarjar/**'
+    }
 }
 
 def sourcesArchive = tasks.named('sourcesJar', Jar) {
     dependsOn(bundledSources)
     from { bundledSources.collect { zipTree(it) } }
+    from(project(':core').sourceSets.main.resources) {
+        include "${mod_id}.mixins.json"
+    }
 }
 
 base {
@@ -45,7 +57,6 @@ base {
         destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
         duplicatesStrategy = DuplicatesStrategy.FAIL
         manifest.attributes([
-                'MixinConfigs': "${mod_id}.mixins.json",
                 'Specification-Title': mod_name,
                 'Specification-Version': mod_version,
                 'Specification-Vendor': 'ModularMCLib',
@@ -53,5 +64,13 @@ base {
                 'Implementation-Version': version,
                 'Implementation-Vendor': 'ModularMCLib',
         ])
+    }
+}
+
+if (project.name == 'forge') {
+    [mainArchive, slimArchive].each { archive ->
+        archive.configure {
+            manifest.attributes('MixinConfigs': "${mod_id}.mixins.json")
+        }
     }
 }

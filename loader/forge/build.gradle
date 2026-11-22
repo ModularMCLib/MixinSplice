@@ -1,8 +1,26 @@
 plugins {
     id 'java-library'
+    alias libs.plugins.neoGradle
 }
 
 description = 'Forge 平台接入与发行'
+
+repositories {
+    maven {
+        name = 'Forge'
+        url = 'https://maven.minecraftforge.net/'
+        content { includeGroup('net.minecraftforge') }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'SpongePowered'
+                url = 'https://repo.spongepowered.org/maven/'
+            }
+        }
+        filter { includeModule('org.spongepowered', 'mixin') }
+    }
+}
 
 dependencies {
     compileOnly project(':core')
@@ -23,6 +41,7 @@ ext.platformMetadata = [
 
 apply from: "$rootDir/gradle/scripts/resources.gradle"
 apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
 
 tasks.named('testModJar', Jar) {

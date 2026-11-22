@@ -7,7 +7,9 @@ def replaceProperties = [
         mod_name         : mod_name,
         mod_description  : mod_description,
         mod_url          : mod_url,
-        mod_issue_tracker: mod_issue_tracker
+        mod_issue_tracker: mod_issue_tracker,
+        common_artifact  : "${mod_id}-common",
+        common_version   : project.version.toString()
 ] + platformMetadata
 
 def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {

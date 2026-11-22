@@ -1,8 +1,17 @@
 plugins {
     id 'java-library'
+    alias libs.plugins.neoGradle
 }
 
 description = 'Fabric 平台接入与发行'
+
+repositories {
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+        content { includeGroup('net.fabricmc') }
+    }
+}
 
 dependencies {
     compileOnly project(':core')
@@ -17,4 +26,5 @@ ext.platformMetadata = [
 
 apply from: "$rootDir/gradle/scripts/resources.gradle"
 apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"

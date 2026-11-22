@@ -9,6 +9,12 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+def commonJar = project(':core').tasks.named('jar', Jar)
+dependencies {
+    // 开发运行加载的是未打包的源集，将共享库加入同一游戏层。
+    localRuntime files(commonJar)
+}
+
 runs {
     configureEach {
         workingDirectory project.layout.projectDirectory.dir('run').dir(name)

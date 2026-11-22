@@ -3,10 +3,62 @@ plugins {
 }
 
 dependencies {
-    api project(':api')
+    compileOnlyApi project(':api')
     compileOnly libs.mixin
     compileOnly libs.asm.tree
     compileOnly libs.asm.commons
     compileOnly libs.jspecify
     compileOnly libs.maven.artifact
 }
+
+def apiMain = project(':api').sourceSets.main
+
+tasks.named('processResources', ProcessResources) {
+    def properties = [
+            mod_id     : mod_id,
+            mod_name   : mod_name,
+            mod_license: mod_license,
+            version    : project.version.toString(),
+    ]
+    inputs.properties properties
+    from('src/main/templates') {
+        expand properties
+    }
+    // 初始化配置由平台包注册。
+    exclude "${mod_id}.mixins.json"
+}
+
+base {
+    archivesName = "${mod_id}-common"
+}
+
+def commonJar = tasks.named('jar', Jar) {
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+    from apiMain.output
+    from rootProject.file('LICENSE')
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    manifest.attributes([
+            'FMLModType': 'GAMELIBRARY',
+            'Automatic-Module-Name': "${project.group}.common",
+            'Implementation-Version': project.version,
+    ])
+}
+
+tasks.named('sourcesJar', Jar) {
+    destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+    from apiMain.allSource
+    from rootProject.file('LICENSE')
+    exclude "${mod_id}.mixins.json"
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+
+configurations {
+    commonElements {
+        canBeConsumed = true
+        canBeResolved = false
+        outgoing.capability("${project.group}:${mod_id}-common:${project.version}")
+        outgoing.artifact commonJar
+    }
+}
+
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
