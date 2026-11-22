@@ -23,18 +23,6 @@ spotless {
         endWithNewline()
         eclipse('4.31').configFile(formatFile)
     }
-    kotlin {
-        target '**/src/*/java/**/*.kt', '**/src/*/kotlin/**/*.kt'
-        targetExclude '**/build/**'
-
-        def orderFile = file("$rootDir/gradle/spotless/spotless.ktlint")
-        ktlint().setEditorConfigPath(orderFile)
-
-        toggleOffOn()
-        trimTrailingWhitespace()
-        leadingSpacesToTabs()
-        endWithNewline()
-    }
     json {
         target '**/src/*/resources/**/*.json', '**/src/*/resources/**/*.mcmeta'
         targetExclude '**/build/**', '**/src/generated/resources/**'
