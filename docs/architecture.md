@@ -8,11 +8,11 @@ MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 | --- | --- |
 | `:api` | 条件、目标、Handler、取消和注解变换的公共契约，不依赖 Loader 或 ASM |
 | `:core` | Mixin 0.8.7 接入、扩展排序、条件求值、目标分析和注解处理 |
-| `:loader:neoforge` | NeoForge 平台环境、模组入口、开发运行、GameTest 和发行包 |
-| `:loader:fabric`、`:loader:forge` | Gradle 平台模块定义 |
-| `:tests` | 条件求值和扩展排序的 JVM 测试 |
+| `:loader:neoforge` | NeoForge 平台环境、NeoGradle 开发运行、GameTest 和发行包 |
+| `:loader:fabric`、`:loader:forge` | 平台环境、发行包和服务端测试模组 |
+| `:tests` | 条件求值和扩展排序的 JVM 测试，以及三平台共用的 Mixin 用例 |
 
-依赖方向为 `Loader → Core → API`。Loader 提供 Mod 列表、版本查询和可扫描的类路径，NeoForge 发行包收录 API 和 Core。Core 的 `mixin` 包负责与 Mixin 生命周期对接。`MixinInternals` 访问 Mixin 0.8.7 的可变 Mixin 集合、定义字节码和配置准备入口。公开的目标上下文只提供目标字节码，`IMixinInfo.getClassNode()` 返回副本，因此取消、调整和生成目标通过这些内部状态实现。Mixin 版本更新以发行环境对这些访问点和执行时机的验证为准。
+依赖方向为 `Loader → Core → API`。各平台提供 Mod 列表、版本查询和可扫描的类路径，三个发行包均收录 API、Core 和共享 Mixin 配置。Fabric 通过 `fabric.mod.json` 加载配置，Forge 通过 Manifest 的 `MixinConfigs` 加载，NeoForge 通过 `neoforge.mods.toml` 的 `[[mixins]]` 加载。Forge 和 NeoForge 使用 `lowcodefml` 注册生产模组。Core 的 `MixinInternals` 访问 Mixin 0.8.7 的可变 Mixin 集合、定义字节码和配置准备入口。公开的目标上下文只提供目标字节码，`IMixinInfo.getClassNode()` 返回副本，因此取消、调整和生成目标通过这些内部状态实现。
 
 ## 生命周期
 
@@ -23,11 +23,11 @@ MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 | `IExtension.preApply()` | 对当前目标执行取消，应用程序化注解变换和声明式注入调整，暂时移除 MixinWeaver 的类级配置注解 |
 | `IExtension.postApply()` | 恢复当前目标使用的临时注入器注解及类级配置注解 |
 
-`acceptTargets()` 处理各配置此时已准备好的 Mixin，包括使用自身配置插件的 Mixin。配置插件通过 `getMixins()` 在这一回调之后追加的条目处在自动条件筛选和动态目标扩展的扫描范围之外。
+`acceptTargets()` 处理各配置此时已准备好的 Mixin。配置插件通过 `getMixins()` 追加的条目在其准备回调中执行同一套条件选择和动态目标分析。生成副本使用独立的待处理列表，避免修改 Mixin 正在遍历的列表。
 
 ## 条件选择
 
-`@Conditional` 的 `require` 必须全部满足，`conflict` 中任一条件满足即拒绝应用。`@ConditionSpec("example_mod")` 检查 Mod 是否存在。指定 `version` 后还检查版本。NeoForge 接受比较式（如 `>=21.1 <22`）和 Maven 版本区间。`Kind.MIXIN` 检查指定 Mixin 的字节码是否存在及其自身条件是否满足。`Kind.CUSTOM` 引用 `WeaverExtension` 注册的条件。
+`@Conditional` 的 `require` 必须全部满足，`conflict` 中任一条件满足即拒绝应用。`@ConditionSpec("example_mod")` 检查 Mod 是否存在。`version` 接受单个谓词，`versions` 中任一谓词满足即可。三个平台接受比较式（如 `>=1.21 <1.22`）和数字版本通配符（如 `1.21.x`）。Fabric 使用 Loader 原生谓词，Forge 和 NeoForge 也接受 Maven 版本区间。`Kind.MIXIN` 检查指定 Mixin 的字节码是否存在及其自身条件是否满足。`Kind.CUSTOM` 引用 `WeaverExtension` 注册的条件。
 
 环境无法求值或条件出现循环时可能返回 `UNKNOWN`，按 `UnknownPolicy` 处理。默认 `DENY`，也可选择 `ALLOW` 或 `FAIL`。
 
@@ -43,7 +43,7 @@ MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 
 `@DynamicTargets` 使用已声明的目标作为搜索起点。`SUBCLASSES` 选择发现的子类，`IMPLEMENTERS` 选择接口实现类，`OVERRIDING` 选择覆盖相关方法的类。默认 `BYPASSING` 选择可能绕过父实现的覆盖者。若某个方法仅在部分路径调用 `super`，这些路径可能先触发父类注入，再触发覆盖者上的注入。
 
-`packages` 限定候选目标的包名前缀，`provider` 引用已注册的 `DynamicTargetProvider`。`relaxRequirements` 只放宽生成副本的缺失注入点要求。NeoForge 从已发现的 Mod 文件根路径建立类索引，生成目标前检查目标是否已经加载。
+`packages` 限定候选目标的包名前缀，`provider` 引用已注册的 `DynamicTargetProvider`。`relaxRequirements` 只放宽生成副本的缺失注入点要求。Core 从 Loader 发现的 Mod 根路径建立类索引，扫描范围包含 Loader 已发现的嵌套 Mod。生成目标前检查目标是否已经加载。
 
 目标分析在声明式注入调整之前执行，因此生成目标的范围取决于原始选择器和策略。
 
@@ -55,7 +55,7 @@ MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 
 ## 验证范围
 
-JVM 测试验证条件求值和扩展排序。NeoForge GameTest 验证条件允许与拒绝、跨 Mixin 注入、注解作用域、动态副本匹配、方法覆盖、缺失注入点及接口实现。当前组合为 Minecraft 1.21.1、NeoForge 21.1.265、Mixin 0.8.7 和 Java 21。
+JVM 测试验证条件求值和扩展排序。三平台的运行测试共用测试类，覆盖条件选择、跨 Mixin 注入、注解作用域、动态目标、接口和配置插件追加的 Mixin。运行 NeoForge 用例可执行 `:loader:neoforge:runGameTestServer`。Fabric 和 Forge 可通过 `:loader:fabric:testModJar`、`:loader:forge:testModJar` 构建独立测试模组。将测试 JAR 与对应主 JAR 放进测试服务端的 `mods/` 后，Fabric 使用 `--initSettings`，Forge 使用 `--help`。断言通过后输出 `MixinWeaver runtime tests passed`。
 
 ## 上游参考
 
