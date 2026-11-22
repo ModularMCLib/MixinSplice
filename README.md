@@ -22,11 +22,13 @@ MixinWeaver 是 SpongePowered Mixin 的扩展，提供条件选择、动态目�
 abstract class CompatibilityMixin {}
 ```
 
-- `@Conditional` 支持 Mod、版本、Mixin 和自定义条件。`@ConditionSpec("example_mod")` 检查 Mod 是否存在。`versions = {"1.21.x", ">=1.22"}` 表示任一版本条件成立即可。
-- `@CancelMixins` 在当前目标类上取消指定 Mixin。`@AdjustInjection` 在两个 Mixin 共同作用的目标类上替换注入选择器。引用其他 Mixin 时使用二进制类名，例如 `example.other.Outer$NestedMixin`。
-- `@DynamicTargets` 默认扩展到可以绕过父实现的覆盖者，也可选择子类、所有覆盖者、接口实现者或自定义目标。
-- `@TargetHandler` 配合注入器的 `method = "@mixinweaver:handler"` 选择同一个目标类中另一个 Mixin 的处理方法。
+- `@Conditional` 在 Mixin 解析目标类前检查 Mod、版本、Mixin 和自定义条件。`@ConditionSpec("example_mod")` 检查 Mod 是否存在。`versions = {"1.21.x", ">=1.22"}` 表示任一版本条件成立即可。自定义条件可直接写 `@ConditionSpec(tester = MyCondition.class)`。
+- `@CancelMixins` 在当前目标类上取消指定 Mixin。`@AdjustInjection` 在两个 Mixin 共同作用的目标类上调整方法、`@At`、`@Slice`、序号或注入次数，也可移除注入器。引用其他 Mixin 时使用二进制类名，例如 `example.other.Outer$NestedMixin`。
+- `@DynamicTargets` 默认扩展到可以绕过父实现的覆盖者，也可选择子类、所有覆盖者、接口实现者或自定义目标。选择和副本生成均处理 MixinExtras 注入器。迁移依赖 PolyMixin 默认宽松行为的 Mixin 时，填写 `relaxRequirements = true`。
+- `@TargetHandler` 配合注入器的 `method = "@mixinweaver:handler"` 选择同一个目标类中另一个 Mixin 的处理方法。调试时可用 `print = true` 查看候选，并将该注入器设为 `require = 0, expect = 0`。
 - `WeaverExtension` 通过 `ServiceLoader` 提供需要 Java 逻辑的规则，包括自定义条件、目标提供者、取消器和注解变换。
+
+项目使用 Mixin 注解处理器生成 Refmap 时，将 MixinWeaver 主 JAR 一并加入 Gradle 的 `annotationProcessor`。javac 会自动注册 Handler 选择器，并沿用项目的 Mixin 映射配置。
 
 注解的作用域、执行顺序和限制见[架构文档](docs/architecture.md)。
 
@@ -72,11 +74,13 @@ Choose the main JAR for Fabric, Forge, or NeoForge. Keep your Mixin in its regul
 abstract class CompatibilityMixin {}
 ```
 
-- `@Conditional` supports mod presence, versions, Mixin presence, and custom conditions. `@ConditionSpec("example_mod")` checks mod presence. `versions = {"1.21.x", ">=1.22"}` accepts either version predicate.
-- `@CancelMixins` cancels named Mixins on the current target class. `@AdjustInjection` replaces an injection selector on a target shared by both Mixins. Refer to other Mixins by binary class name, such as `example.other.Outer$NestedMixin`.
-- `@DynamicTargets` defaults to overrides that can bypass the parent implementation. It also supports subclasses, all overrides, interface implementers, and custom targets.
-- `@TargetHandler` works with an injector's `method = "@mixinweaver:handler"` to select a handler from another Mixin on the same target class.
+- `@Conditional` checks mod presence, versions, Mixin presence, and custom conditions before Mixin resolves target classes. `@ConditionSpec("example_mod")` checks mod presence. `versions = {"1.21.x", ">=1.22"}` accepts either version predicate. Use `@ConditionSpec(tester = MyCondition.class)` to name a custom condition directly.
+- `@CancelMixins` cancels named Mixins on the current target class. `@AdjustInjection` can change methods, `@At`, `@Slice`, ordinals, or counts on an injector, or remove the injector on a shared target. Refer to other Mixins by binary class name, such as `example.other.Outer$NestedMixin`.
+- `@DynamicTargets` defaults to overrides that can bypass the parent implementation. It also supports subclasses, all overrides, interface implementers, and custom targets. Target selection and generated copies account for MixinExtras injectors. Set `relaxRequirements = true` when migrating a Mixin that relies on PolyMixin's relaxed defaults.
+- `@TargetHandler` works with an injector's `method = "@mixinweaver:handler"` to select a handler from another Mixin on the same target class. Use `print = true` with `require = 0, expect = 0` to list candidates.
 - `WeaverExtension` uses `ServiceLoader` to supply Java rules for custom conditions, target providers, cancellation, and annotation transformations.
+
+If your project uses the Mixin annotation processor to generate a Refmap, add the main MixinWeaver JAR to Gradle's `annotationProcessor` configuration. Javac registers the handler selector automatically and uses your project's existing Mixin mappings.
 
 For annotation scope, execution order, and limitations, see the [architecture document](docs/architecture.md).
 
