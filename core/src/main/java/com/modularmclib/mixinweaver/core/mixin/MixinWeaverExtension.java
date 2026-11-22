@@ -43,10 +43,7 @@ final class MixinWeaverExtension implements IExtension {
         if (installed) {
             return;
         }
-        Object active = MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
-        if (!(active instanceof IMixinTransformer transformer) || !(transformer.getExtensions() instanceof Extensions extensions)) {
-            throw new IllegalStateException("MixinWeaver 需要 Mixin 0.8.7 的转换扩展注册表");
-        }
+        Extensions extensions = extensions();
         var extension = new MixinWeaverExtension(registry);
         if (!extension.cancellers.isEmpty() || !extension.transformations.isEmpty()) {
             MixinInternals.verifyApplicationAccess();
@@ -54,6 +51,14 @@ final class MixinWeaverExtension implements IExtension {
         TargetSelector.register(HandlerSelector.class, "mixinweaver");
         extensions.add(extension);
         installed = true;
+    }
+
+    static Extensions extensions() {
+        Object active = MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
+        if (active instanceof IMixinTransformer transformer && transformer.getExtensions() instanceof Extensions registry) {
+            return registry;
+        }
+        throw new IllegalStateException("MixinWeaver 需要 Mixin 0.8.7 的转换扩展注册表");
     }
 
     @Override

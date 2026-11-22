@@ -6,5 +6,6 @@ dependencies {
     api project(':api')
     compileOnly libs.mixin
     compileOnly libs.asm.tree
+    compileOnly libs.asm.commons
     compileOnly libs.jspecify
 }

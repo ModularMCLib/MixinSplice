@@ -2,6 +2,7 @@ package com.modularmclib.mixinweaver.api.extension;
 
 import com.modularmclib.mixinweaver.api.condition.Condition;
 import com.modularmclib.mixinweaver.api.mixin.MixinCanceller;
+import com.modularmclib.mixinweaver.api.target.DynamicTargetProvider;
 import com.modularmclib.mixinweaver.api.transformation.AnnotationTransformation;
 
 import java.util.List;
@@ -40,5 +41,10 @@ public interface WeaverExtension {
     /** 返回按声明顺序执行的注解调整规则。列表及元素均需非空。 */
     default List<AnnotationTransformation> transformations() {
         return List.of();
+    }
+
+    /** 注册动态目标提供者。键是全局唯一的提供者 ID，映射及其内容均需非空。 */
+    default Map<String, DynamicTargetProvider> targetProviders() {
+        return Map.of();
     }
 }

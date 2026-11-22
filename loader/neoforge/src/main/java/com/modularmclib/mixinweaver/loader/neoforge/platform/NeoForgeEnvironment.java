@@ -12,9 +12,19 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.artifact.versioning.VersionRange;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public final class NeoForgeEnvironment implements PlatformEnvironment {
+
+    @Override
+    public List<Path> classpathRoots() {
+        LoadingModList loading = LoadingModList.get();
+        if (loading == null) {
+            return List.of();
+        }
+        return loading.getModFiles().stream().map(info -> info.getFile().getSecureJar().getRootPath()).distinct().toList();
+    }
 
     @Override
     public ConditionResult mod(String modId, String versionPredicate) {

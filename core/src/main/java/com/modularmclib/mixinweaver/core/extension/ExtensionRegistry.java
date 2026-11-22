@@ -3,6 +3,7 @@ package com.modularmclib.mixinweaver.core.extension;
 import com.modularmclib.mixinweaver.api.condition.Condition;
 import com.modularmclib.mixinweaver.api.extension.WeaverExtension;
 import com.modularmclib.mixinweaver.api.mixin.MixinCanceller;
+import com.modularmclib.mixinweaver.api.target.DynamicTargetProvider;
 import com.modularmclib.mixinweaver.api.transformation.AnnotationTransformation;
 
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.PriorityQueue;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 public final class ExtensionRegistry {
 
@@ -22,18 +24,12 @@ public final class ExtensionRegistry {
     private final Map<String, Condition> conditions;
     private final List<MixinCanceller> cancellers;
     private final List<AnnotationTransformation> transformations;
+    private final Map<String, DynamicTargetProvider> targetProviders;
 
     public ExtensionRegistry(Collection<WeaverExtension> extensions) {
         ordered = order(extensions);
-        Map<String, Condition> indexed = new HashMap<>();
-        for (WeaverExtension extension : ordered) {
-            extension.conditions().forEach((key, condition) -> {
-                if (indexed.putIfAbsent(key, condition) != null) {
-                    throw new IllegalArgumentException("重复的 MixinWeaver 条件 ID " + key);
-                }
-            });
-        }
-        conditions = Map.copyOf(indexed);
+        conditions = index(WeaverExtension::conditions, "条件");
+        targetProviders = index(WeaverExtension::targetProviders, "目标提供者");
         cancellers = ordered.stream().flatMap(extension -> extension.cancellers().stream()).toList();
         transformations = ordered.stream().flatMap(extension -> extension.transformations().stream()).toList();
     }
@@ -57,6 +53,22 @@ public final class ExtensionRegistry {
 
     public List<AnnotationTransformation> transformations() {
         return transformations;
+    }
+
+    public Map<String, DynamicTargetProvider> targetProviders() {
+        return targetProviders;
+    }
+
+    private <T> Map<String, T> index(Function<WeaverExtension, Map<String, T>> entries, String kind) {
+        Map<String, T> indexed = new HashMap<>();
+        for (WeaverExtension extension : ordered) {
+            entries.apply(extension).forEach((key, value) -> {
+                if (key.isBlank() || indexed.putIfAbsent(key, value) != null) {
+                    throw new IllegalArgumentException("无效或重复的 MixinWeaver " + kind + " ID " + key);
+                }
+            });
+        }
+        return Map.copyOf(indexed);
     }
 
     private static List<WeaverExtension> order(Collection<WeaverExtension> extensions) {

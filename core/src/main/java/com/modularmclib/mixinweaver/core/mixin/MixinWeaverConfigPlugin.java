@@ -36,6 +36,7 @@ public class MixinWeaverConfigPlugin implements IMixinConfigPlugin {
                 .load(PlatformEnvironment.class, PlatformEnvironment.class.getClassLoader())
                 .findFirst().orElse((modId, version) -> ConditionResult.UNKNOWN);
         private static final ConditionEvaluator CONDITIONS = new ConditionEvaluator(PLATFORM, EXTENSIONS.conditions(), MixinBytecode::metadata);
+        private static final MixinPreparation PREPARATION = new MixinPreparation(CONDITIONS, PLATFORM, EXTENSIONS.targetProviders());
     }
 
     @Override
@@ -54,7 +55,9 @@ public class MixinWeaverConfigPlugin implements IMixinConfigPlugin {
     }
 
     @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
+    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
+        Runtime.PREPARATION.prepare(myTargets, otherTargets);
+    }
 
     @Override
     public List<String> getMixins() {
