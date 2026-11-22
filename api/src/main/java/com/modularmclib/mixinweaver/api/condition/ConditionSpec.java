@@ -18,6 +18,9 @@ public @interface ConditionSpec {
     /** 平台版本谓词。空字符串表示只检查 Mod 是否存在。 */
     String version() default "";
 
+    /** 任一版本谓词满足即可。仅用于 Mod 条件，与 version 二选一。 */
+    String[] versions() default {};
+
     enum Kind {
         MOD,
         MIXIN,

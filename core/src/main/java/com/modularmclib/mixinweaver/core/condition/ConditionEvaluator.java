@@ -82,11 +82,12 @@ public final class ConditionEvaluator {
         ConditionSpec.Kind kind = Annotations.getValue(spec, "kind", ConditionSpec.Kind.class, ConditionSpec.Kind.MOD);
         String value = Annotations.getValue(spec, "value", "");
         String version = Annotations.getValue(spec, "version", "");
-        if (value.isBlank() || (kind != ConditionSpec.Kind.MOD && !version.isEmpty())) {
+        List<String> versions = Annotations.getValue(spec, "versions", true);
+        if (value.isBlank() || (kind != ConditionSpec.Kind.MOD && (!version.isEmpty() || !versions.isEmpty())) || (!version.isEmpty() && !versions.isEmpty()) || versions.stream().anyMatch(String::isBlank)) {
             throw new IllegalArgumentException("无效的 MixinWeaver 条件 " + value);
         }
         return switch (kind) {
-            case MOD -> Conditions.modVersion(value, version);
+            case MOD -> versions.isEmpty() ? Conditions.modVersion(value, version) : Conditions.anyOf(versions.stream().map(predicate -> Conditions.modVersion(value, predicate)).toArray(Condition[]::new));
             case MIXIN -> Conditions.mixinPresent(value);
             case CUSTOM -> Objects.requireNonNull(conditions.get(value), "未注册的 MixinWeaver 条件 " + value);
         };

@@ -3,6 +3,7 @@ package com.modularmclib.mixinweaver.core.mixin;
 import com.modularmclib.mixinweaver.core.target.GeneratedMixin;
 
 import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.refmap.IReferenceMapper;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.service.IMixinService;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Mixin 0.8.7 的内部访问边界。
@@ -48,7 +51,17 @@ final class MixinInternals {
         private static final Field PENDING_MIXINS = field(ClassInfo.class, "mixins", Set.class);
         private static final Field REFMAP = field(CONFIG, "refMapper", IReferenceMapper.class);
         private static final Field SERVICE = field(CONFIG, "service", IMixinService.class);
+        private static final Field PENDING_MIXINS_IN_CONFIG = field(CONFIG, "pendingMixins", List.class);
         private static final Method PREPARE = method(CONFIG, "prepareMixins", String.class, List.class, boolean.class, Extensions.class);
+    }
+
+    private static final class PluginMixins {
+
+        private static final Class<?> LISTENER = type("MixinConfig$IListener");
+        private static final Class<?> PROCESSOR = type("MixinProcessor");
+        private static final Field TRANSFORMER_PROCESSOR = field(type("MixinTransformer"), "processor", PROCESSOR);
+        private static final Field PENDING_CONFIGS = field(PROCESSOR, "pendingConfigs", List.class);
+        private static final Method ADD_LISTENER = method(Preparation.CONFIG, "addListener", LISTENER);
     }
 
     static void verifyApplicationAccess() {
@@ -87,6 +100,40 @@ final class MixinInternals {
         return (IReferenceMapper) read(Preparation.REFMAP, config);
     }
 
+    // getMixins 在 acceptTargets 之后执行，监听器观察该阶段实际准备的条目。
+    static void listenForPluginMixins(Consumer<IMixinInfo> onPrepare) {
+        Object transformer = MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
+        Object processor = read(PluginMixins.TRANSFORMER_PROCESSOR, transformer);
+        for (Object entry : (List<?>) read(PluginMixins.PENDING_CONFIGS, processor)) {
+            IMixinConfig config = IMixinConfig.class.cast(entry);
+            String key = "mixinweaver:plugin_mixin_listener";
+            var plugin = config.getPlugin();
+            if (plugin == null || plugin.getClass() == MixinWeaverConfigPlugin.class || config.hasDecoration(key)) {
+                continue;
+            }
+            Object listener = Proxy.newProxyInstance(PluginMixins.LISTENER.getClassLoader(),
+                    new Class<?>[] { PluginMixins.LISTENER }, (proxy, callback, arguments) -> {
+                        return switch (callback.getName()) {
+                            case "onPrepare" -> {
+                                onPrepare.accept(IMixinInfo.class.cast(arguments[0]));
+                                yield null;
+                            }
+                            case "onInit" -> null;
+                            case "toString" -> "MixinWeaver 配置监听器";
+                            case "hashCode" -> System.identityHashCode(proxy);
+                            case "equals" -> proxy == arguments[0];
+                            default -> throw new IllegalStateException("未知的 Mixin 配置监听回调 " + callback);
+                        };
+                    });
+            try {
+                PluginMixins.ADD_LISTENER.invoke(config, listener);
+            } catch (ReflectiveOperationException exception) {
+                throw new IllegalStateException("注册 Mixin 配置监听器失败 " + config.getName(), exception);
+            }
+            config.decorate(key, Boolean.TRUE);
+        }
+    }
+
     static void removeTarget(IMixinInfo mixin, String target) {
         Map<?, ?> mapping = (Map<?, ?>) read(Preparation.MIXIN_MAPPING, mixin.getConfig());
         if (mapping.get(target) instanceof Collection<?> mixins) {
@@ -104,8 +151,11 @@ final class MixinInternals {
         write(Preparation.REFMAP, config, refmap);
 
         IMixinService base = (IMixinService) read(Preparation.SERVICE, config);
-        write(Preparation.SERVICE, config, GeneratedBytecodeService.wrap(base, generated));
+        Object pending = read(Preparation.PENDING_MIXINS_IN_CONFIG, config);
         try {
+            // 插件追加的 Mixin 仍处于准备循环。副本使用独立的待处理列表。
+            write(Preparation.PENDING_MIXINS_IN_CONFIG, config, new ArrayList<>());
+            write(Preparation.SERVICE, config, GeneratedBytecodeService.wrap(base, generated));
             Preparation.PREPARE.invoke(config, "MixinWeaver 动态目标",
                     generated.stream().map(GeneratedMixin::relativeName).toList(), true, MixinWeaverExtension.extensions());
         } catch (InvocationTargetException exception) {
@@ -114,6 +164,7 @@ final class MixinInternals {
             throw new IllegalStateException("无法调用 Mixin 0.8.7 的准备入口 " + config.getName(), exception);
         } finally {
             write(Preparation.SERVICE, config, base);
+            write(Preparation.PENDING_MIXINS_IN_CONFIG, config, pending);
         }
     }
 
