@@ -13,6 +13,7 @@ public final class RuntimeAssertions {
         var target = new TransformationTarget();
         assertTrue(target.handlerValue() == 42, "跨 Mixin 注入应替换处理方法的结果");
         assertTrue(target.adjustedValue() == 99, "注解调整应改变注入目标");
+        assertTrue(target.ordinalValue(true) == 3 && target.ordinalValue(false) == 97, "序号调整只应选中第二个返回位置");
         assertTrue(target.originalValue() == 6, "替换选择器后应跳过原注入目标");
         assertTrue(target.cancelledValue() == 7, "已取消的 Mixin 不应运行");
         assertTrue(target.unavailableValue() == 8, "缺少依赖时条件 Mixin 不应运行");
@@ -26,6 +27,7 @@ public final class RuntimeAssertions {
                 reason -> assertTrue(reason.contains("ExistingTargetCondition"), "应报告拒绝目标的条件")), "主动查询应拒绝缺失的目标");
         var other = new TransformationTarget.Other();
         assertTrue(other.adjustedValue() == 5 && other.originalValue() == 99, "其他目标应保留原注入选择器");
+        assertTrue(other.ordinalValue(true) == 97 && other.ordinalValue(false) == 97, "其他目标应保留原注入点范围");
         assertTrue(other.cancelledValue() == 100, "其他目标应继续应用同一个 Mixin");
     }
 

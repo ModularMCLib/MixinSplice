@@ -43,7 +43,7 @@ final class MixinDeclarations {
 
     private static InjectionAdjustment readAdjustment(String source, AnnotationNode annotation) {
         return new InjectionAdjustment(source, Annotations.getValue(annotation, "mixin", ""),
-                Annotations.getValue(annotation, "handler", ""), Annotations.getValue(annotation, "method", true));
+                Annotations.getValue(annotation, "handler", ""), annotation);
     }
 
     static void hideMetadata(ClassNode bytecode, List<Runnable> restore) {

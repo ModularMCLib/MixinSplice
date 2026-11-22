@@ -6,6 +6,13 @@ public class TransformationTarget {
         return 1;
     }
 
+    public int ordinalValue(boolean early) {
+        if (early) {
+            return 3;
+        }
+        return 4;
+    }
+
     public int handlerValue() {
         return 2;
     }
@@ -27,6 +34,13 @@ public class TransformationTarget {
     }
 
     public static class Other {
+
+        public int ordinalValue(boolean early) {
+            if (early) {
+                return 3;
+            }
+            return 4;
+        }
 
         public int adjustedValue() {
             return 5;

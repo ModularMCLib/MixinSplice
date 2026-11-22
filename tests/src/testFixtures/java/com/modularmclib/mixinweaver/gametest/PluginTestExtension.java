@@ -6,6 +6,7 @@ import com.modularmclib.mixinweaver.api.extension.WeaverExtension;
 import com.modularmclib.mixinweaver.api.mixin.MixinCanceller;
 import com.modularmclib.mixinweaver.api.target.DynamicTargetProvider;
 import com.modularmclib.mixinweaver.api.transformation.AnnotationTransformation;
+import com.modularmclib.mixinweaver.api.transformation.InjectionAnnotation;
 
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -45,7 +46,7 @@ public final class PluginTestExtension implements WeaverExtension {
             if (!target.mixin().className().startsWith(TEST_MIXIN_PACKAGE + "PluginScopeMixin")) {
                 return annotations;
             }
-            return annotations.stream().map(annotation -> annotation.descriptor().equals(inject) ? annotation.withValue("method", List.of("amount")) : annotation).toList();
+            return annotations.stream().map(annotation -> annotation.descriptor().equals(inject) ? new InjectionAnnotation(annotation).withMethods(List.of("amount")).mapAt(point -> point.withOrdinal(0)).view() : annotation).toList();
         });
     }
 }
