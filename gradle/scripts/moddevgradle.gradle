@@ -30,6 +30,8 @@ neoForge {
         // 将各源集绑定到模组。
         "${mod_id}" {
             sourceSet(sourceSets.main)
+            sourceSet(project(':api').sourceSets.main)
+            sourceSet(project(':core').sourceSets.main)
             sourceSet(sourceSets.client)
             sourceSet(sourceSets.test)
             sourceSet(sourceSets.extra)

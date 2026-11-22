@@ -9,6 +9,10 @@ lombok = "9.5.0"
 jetbrains-annotations = "26.1.0"
 renderNurse = "0.0.14"
 mixin = "0.8.7"
+asm = "9.8"
+jspecify = "1.0.0"
+junit = "5.14.2"
+guava = "32.1.2-jre"
 
 [libraries]
 minecraft               = { module = "com.mojang:minecraft", version.ref = "minecraft" }
@@ -17,6 +21,12 @@ testframework           = { module = "net.neoforged:testframework", version.ref 
 jetbrains-annotations   = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 renderNurse             = { module = "net.neoforged:render-nurse", version.ref = "renderNurse" }
 mixin                   = { module = "org.spongepowered:mixin", version.ref = "mixin" }
+asm-tree                = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+jspecify                = { module = "org.jspecify:jspecify", version.ref = "jspecify" }
+junit-bom               = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter           = { module = "org.junit.jupiter:junit-jupiter" }
+junit-launcher          = { module = "org.junit.platform:junit-platform-launcher" }
+guava                   = { module = "com.google.guava:guava", version.ref = "guava" }
 
 [plugins]
 modDevGradle            = { id = "net.neoforged.moddev", version.ref = "modDevGradle" }
