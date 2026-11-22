@@ -8,7 +8,7 @@ MixinWeaver 是 SpongePowered Mixin 的扩展，提供条件选择、动态目�
 
 ### 使用方式
 
-选择 Fabric、Forge 或 NeoForge 对应的主 JAR。将 Mixin 注册到原有的 `mixins.json`，再按需要添加注解。MixinWeaver 的配置会自动注册转换扩展。
+安装时选择 Fabric、Forge 或 NeoForge 对应的主 JAR。主 JAR 已内嵌共享库，并通过自己的 `mixinweaver.mixins.json` 启动扩展。消费方在自己的 `mixins.json` 中注册 Mixin，再按需要添加注解。
 
 ```java
 @Conditional(require = @ConditionSpec("example_mod"))
@@ -28,7 +28,26 @@ abstract class CompatibilityMixin {}
 - `@TargetHandler` 配合注入器的 `method = "@mixinweaver:handler"` 选择同一个目标类中另一个 Mixin 的处理方法。调试时可用 `print = true` 查看候选，并将该注入器设为 `require = 0, expect = 0`。
 - `WeaverExtension` 通过 `ServiceLoader` 提供需要 Java 逻辑的规则，包括自定义条件、目标提供者、取消器和注解变换。
 
-项目使用 Mixin 注解处理器生成 Refmap 时，将 MixinWeaver 主 JAR 一并加入 Gradle 的 `annotationProcessor`。javac 会自动注册 Handler 选择器，并沿用项目的 Mixin 映射配置。
+### Gradle 依赖
+
+Maven 分组为 `com.modularmclib.mixinweaver`。编译时使用 `mixinweaver-common`。使用 Mixin 注解处理器为 `@TargetHandler` 生成 Refmap 时，再把同一个制品加入 `annotationProcessor`。其中的 javac 插件会在 Mixin 注解处理开始前注册 Handler 选择器，并沿用项目的 Mixin 映射配置。
+
+```groovy
+dependencies {
+    compileOnly "com.modularmclib.mixinweaver:mixinweaver-common:${mixinweaver_version}"
+    annotationProcessor "com.modularmclib.mixinweaver:mixinweaver-common:${mixinweaver_version}"
+}
+```
+
+内嵌发行时，将对应的平台制品加入消费方的打包配置。开发运行也需加载同一个平台制品。
+
+| Loader | Maven 制品 | 内嵌方式 |
+| --- | --- | --- |
+| Fabric | `mixinweaver-fabric` | Loom 的 `include` |
+| Forge | `mixinweaver-forge` | `dependencies` 中的 `jarJar` |
+| NeoForge | `mixinweaver-neoforge` | `dependencies` 中的 `jarJar` |
+
+使用 ForgeGradle 6 的项目需调用 `jarJar.enable()`，并分发 `jarJar` 任务生成的 JAR。
 
 注解的作用域、执行顺序和限制见[架构文档](docs/architecture.md)。
 
@@ -44,15 +63,16 @@ abstract class CompatibilityMixin {}
 
 ### 构建
 
-用 Java 21 运行 Gradle Wrapper。通过环境变量 `GRADLE_USER_HOME` 指定 Gradle 缓存目录。NeoForge 开发运行使用 NeoGradle。
+用 Java 21 运行 Gradle Wrapper。通过环境变量 `GRADLE_USER_HOME` 指定 Gradle 缓存目录。三平台的主 JAR 由 NeoGradle 的 `jarJar` 任务生成。
 
 ```powershell
 .\gradlew.bat build
 .\gradlew.bat :loader:fabric:slimJar :loader:forge:slimJar :loader:neoforge:slimJar
 .\gradlew.bat :loader:neoforge:runGameTestServer
+.\gradlew.bat publishToMavenLocal
 ```
 
-主 JAR、源码 JAR 和 slim JAR 位于根项目的 `build/libs/`。主 JAR 的命名格式为 `MixinWeaver-<loader>--<minecraft>-<version>.jar`。
+共享库、平台主 JAR、源码 JAR 和单独构建的 slim JAR 位于根项目的 `build/libs/`。通过 `publishToMavenLocal` 安装制品后，消费方可使用 `mavenLocal()` 解析依赖。
 
 ## English
 
@@ -60,7 +80,7 @@ MixinWeaver is an extension for SpongePowered Mixin. It provides conditional sel
 
 ### Usage
 
-Choose the main JAR for Fabric, Forge, or NeoForge. Keep your Mixin in its regular `mixins.json` and add the annotations you need. MixinWeaver's config registers the transformation extension automatically.
+Install the main JAR for Fabric, Forge, or NeoForge. It embeds the shared library and activates the extension through its own `mixinweaver.mixins.json`. Register your Mixins in your mod's `mixins.json` and add the annotations you need.
 
 ```java
 @Conditional(require = @ConditionSpec("example_mod"))
@@ -80,7 +100,26 @@ abstract class CompatibilityMixin {}
 - `@TargetHandler` works with an injector's `method = "@mixinweaver:handler"` to select a handler from another Mixin on the same target class. Use `print = true` with `require = 0, expect = 0` to list candidates.
 - `WeaverExtension` uses `ServiceLoader` to supply Java rules for custom conditions, target providers, cancellation, and annotation transformations.
 
-If your project uses the Mixin annotation processor to generate a Refmap, add the main MixinWeaver JAR to Gradle's `annotationProcessor` configuration. Javac registers the handler selector automatically and uses your project's existing Mixin mappings.
+### Gradle dependencies
+
+The Maven group is `com.modularmclib.mixinweaver`. Use `mixinweaver-common` for compilation. If you use the Mixin annotation processor to generate a Refmap for `@TargetHandler`, also add the same artifact to `annotationProcessor`. Its javac plugin registers the handler selector before Mixin annotation processing and uses your project's existing Mixin mappings.
+
+```groovy
+dependencies {
+    compileOnly "com.modularmclib.mixinweaver:mixinweaver-common:${mixinweaver_version}"
+    annotationProcessor "com.modularmclib.mixinweaver:mixinweaver-common:${mixinweaver_version}"
+}
+```
+
+To embed MixinWeaver in your mod, add the platform artifact to your build's packaging configuration. Load the same platform artifact in development runs.
+
+| Loader | Maven artifact | Packaging configuration |
+| --- | --- | --- |
+| Fabric | `mixinweaver-fabric` | Loom's `include` |
+| Forge | `mixinweaver-forge` | `jarJar` in `dependencies` |
+| NeoForge | `mixinweaver-neoforge` | `jarJar` in `dependencies` |
+
+With ForgeGradle 6, call `jarJar.enable()` and distribute the JAR from the `jarJar` task.
 
 For annotation scope, execution order, and limitations, see the [architecture document](docs/architecture.md).
 
@@ -96,12 +135,13 @@ All three distributions target Java 21 and Mixin 0.8.7. NeoForge 21.0 for Minecr
 
 ### Build
 
-Use Java 21 to run the Gradle Wrapper. Set `GRADLE_USER_HOME` to select the Gradle cache directory. NeoForge development runs use NeoGradle.
+Use Java 21 to run the Gradle Wrapper. Set `GRADLE_USER_HOME` to select the Gradle cache directory. NeoGradle's `jarJar` task builds the main JAR on all three platforms.
 
 ```powershell
 .\gradlew.bat build
 .\gradlew.bat :loader:fabric:slimJar :loader:forge:slimJar :loader:neoforge:slimJar
 .\gradlew.bat :loader:neoforge:runGameTestServer
+.\gradlew.bat publishToMavenLocal
 ```
 
-The main, sources, and slim JARs are written to the root project's `build/libs/` directory. Main JARs follow `MixinWeaver-<loader>--<minecraft>-<version>.jar`.
+The shared library, platform JARs, sources, and separately built slim JARs are written to the root project's `build/libs/` directory. After running `publishToMavenLocal`, consumer builds can resolve the artifacts from `mavenLocal()`.

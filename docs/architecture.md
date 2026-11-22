@@ -12,7 +12,15 @@ MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 | `:loader:fabric`、`:loader:forge` | 平台环境、发行包和服务端测试模组 |
 | `:tests` | 条件求值和扩展排序的 JVM 测试，以及三平台共用的 Mixin 用例 |
 
-依赖方向为 `Loader → Core → API`。各平台提供 Mod 列表、版本查询和可扫描的类路径，三个发行包均收录 API、Core 和共享 Mixin 配置。Fabric 通过 `fabric.mod.json` 加载配置，Forge 通过 Manifest 的 `MixinConfigs` 加载，NeoForge 通过 `neoforge.mods.toml` 的 `[[mixins]]` 加载。Forge 和 NeoForge 使用 `lowcodefml` 注册生产模组。Core 的 `MixinInternals` 访问 Mixin 0.8.7 的可变 Mixin 集合、定义字节码和配置准备入口。公开的目标上下文只提供目标字节码，`IMixinInfo.getClassNode()` 返回副本，因此取消、调整和生成目标通过这些内部状态实现。
+依赖方向为 `Loader → Core → API`。各平台提供 Mod 列表、版本查询和可扫描的类路径。Core 的 `MixinInternals` 访问 Mixin 0.8.7 的可变 Mixin 集合、定义字节码和配置准备入口。公开的目标上下文只提供目标字节码，`IMixinInfo.getClassNode()` 返回副本，因此取消、调整和生成目标通过这些内部状态实现。
+
+## Jar-in-Jar 与 Mixin 配置
+
+`:core` 将 API、实现和 javac 插件打进 `mixinweaver-common`。三平台在同一个 `dependencies` 块中声明 `jarJar project(path: ':core', configuration: 'commonElements')`。NeoGradle 将共享库原样放进平台包的 `META-INF/jarjar/`，并生成 JarJar 元数据。Fabric 读取 `fabric.mod.json` 的 `jars`，共享库的 Fabric ID 为 `mixinweaver_common`。Forge 和 NeoForge 通过 JarJar 元数据找到共享库，由其 Manifest 中的 `FMLModType: GAMELIBRARY` 将它载入游戏层。
+
+初始化配置 `mixinweaver.mixins.json` 随平台包分发。Fabric 在 `fabric.mod.json` 中声明 `mixins`，Forge 在 Manifest 中声明 `MixinConfigs`，NeoForge 在 `neoforge.mods.toml` 中声明 `[[mixins]]`。Forge 和 NeoForge 使用 `lowcodefml` 注册平台模组。共享库提供配置中的插件类 `MixinWeaverConfigPlugin`。配置的 `package` 为 `core.mixins`，让 Mixin 将该包前缀留给 Mixin 类，插件及运行时类位于 `core.mixin`。
+
+消费方通过自己的平台元数据注册自己的 `mixins.json`。平台包作为独立 Mod 安装或作为消费方的 Jar-in-Jar 依赖加载时，都会自动注册 MixinWeaver 的初始化配置。
 
 ## 生命周期
 
