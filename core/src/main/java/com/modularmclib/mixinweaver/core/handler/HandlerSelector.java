@@ -12,7 +12,9 @@ import org.spongepowered.asm.mixin.injection.selectors.ITargetSelectorDynamic;
 import org.spongepowered.asm.mixin.injection.selectors.InvalidSelectorException;
 import org.spongepowered.asm.mixin.injection.selectors.MatchResult;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
+import org.spongepowered.asm.mixin.struct.SpecialMethodInfo;
 import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
+import org.spongepowered.asm.service.MixinService;
 import org.spongepowered.asm.util.Annotations;
 import org.spongepowered.asm.util.asm.IAnnotatedElement;
 import org.spongepowered.asm.util.asm.IAnnotationHandle;
@@ -25,12 +27,14 @@ public final class HandlerSelector implements ITargetSelectorDynamic {
     private final String config;
     private final String prefix;
     private final MemberInfo member;
+    private final boolean print;
 
-    private HandlerSelector(String mixin, String config, String prefix, MemberInfo member) {
+    private HandlerSelector(String mixin, String config, String prefix, MemberInfo member, boolean print) {
         this.mixin = mixin.replace('/', '.');
         this.config = config;
         this.prefix = prefix;
         this.member = member;
+        this.print = print;
     }
 
     /** Mixin 的动态选择器解析入口。 */
@@ -48,8 +52,12 @@ public final class HandlerSelector implements ITargetSelectorDynamic {
         if (mixin.isBlank() || name.isBlank()) {
             throw new InvalidSelectorException("@TargetHandler 需要声明 Mixin 和方法");
         }
+        MemberInfo member = MemberInfo.parse(name, context);
+        if (context.getMethod() instanceof IAnnotatedElement) {
+            HandlerCompilation.addMapping(context, mixin, name, member);
+        }
         return new HandlerSelector(mixin, annotation.getValue("config", ""), annotation.getValue("prefix", ""),
-                MemberInfo.parse(name, context));
+                member, annotation.getValue("print", false));
     }
 
     @Override
@@ -73,6 +81,17 @@ public final class HandlerSelector implements ITargetSelectorDynamic {
         if (mixin.equals(MixinBytecode.originalName(context.getMixin().getMixin()))) {
             throw new InvalidSelectorException("处理方法选择器必须引用另一个 Mixin");
         }
+        if (print && context instanceof SpecialMethodInfo info) {
+            var target = info.getTargetClassNode();
+            var logger = MixinService.getService().getLogger("mixinweaver");
+            logger.info("{} 在 {} 上的候选处理方法", this, target.name);
+            for (MethodNode method : target.methods) {
+                if (method instanceof MethodNodeEx merged && Annotations.getVisible(merged, MixinMerged.class) != null) {
+                    logger.info("  {} {}{} -> {} {}", MixinBytecode.originalName(merged.getOwner()), merged.getOriginalName(),
+                            merged.desc, merged.name, matches(merged) ? "匹配" : "不匹配");
+                }
+            }
+        }
         return this;
     }
 
@@ -88,13 +107,11 @@ public final class HandlerSelector implements ITargetSelectorDynamic {
 
     @Override
     public <T> MatchResult match(ElementNode<T> node) {
-        if (!(node.getMethod() instanceof MethodNodeEx method) || !mixin.equals(MixinBytecode.originalName(method.getOwner())) || Annotations.getVisible(method, MixinMerged.class) == null || (!config.isEmpty() && !config.equals(method.getOwner().getConfig().getName())) || (!prefix.isEmpty() && !method.name.startsWith(prefix + "$"))) {
-            return MatchResult.NONE;
-        }
-        if (member.getName().equals(method.getOriginalName()) && (member.getDesc() == null || member.getDesc().equals(method.desc))) {
-            return MatchResult.EXACT_MATCH;
-        }
-        return MatchResult.NONE;
+        return !print && node.getMethod() instanceof MethodNodeEx method && Annotations.getVisible(method, MixinMerged.class) != null && matches(method) ? MatchResult.EXACT_MATCH : MatchResult.NONE;
+    }
+
+    private boolean matches(MethodNodeEx method) {
+        return mixin.equals(MixinBytecode.originalName(method.getOwner())) && (config.isEmpty() || config.equals(method.getOwner().getConfig().getName())) && (prefix.isEmpty() || method.name.startsWith(prefix + "$")) && member.getName().equals(method.getOriginalName()) && (member.getDesc() == null || member.getDesc().equals(method.desc));
     }
 
     @Override

@@ -21,4 +21,7 @@ public @interface TargetHandler {
 
     /** 选填的注入器前缀，例如 handler 或 redirect。 */
     String prefix() default "";
+
+    /** 输出当前目标上的候选处理方法，跳过本次选择。 */
+    boolean print() default false;
 }

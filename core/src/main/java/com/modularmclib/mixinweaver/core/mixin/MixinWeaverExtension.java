@@ -53,7 +53,7 @@ final class MixinWeaverExtension implements IExtension {
         Extensions extensions = extensions();
         MixinInternals.verifyApplicationAccess();
         TargetSelector.register(HandlerSelector.class, "mixinweaver");
-        extensions.add(new MixinWeaverExtension(registry, evaluator));
+        MixinInternals.registerBeforeConsumers(extensions, new MixinWeaverExtension(registry, evaluator));
         installed = true;
     }
 

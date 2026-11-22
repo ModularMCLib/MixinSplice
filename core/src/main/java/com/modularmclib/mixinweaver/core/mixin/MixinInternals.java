@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.refmap.IReferenceMapper;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.ext.Extensions;
+import org.spongepowered.asm.mixin.transformer.ext.IExtension;
 import org.spongepowered.asm.mixin.transformer.ext.ITargetClassContext;
 import org.spongepowered.asm.service.IMixinService;
 
@@ -38,6 +39,7 @@ final class MixinInternals {
 
     private static final class Application {
 
+        private static final Field EXTENSIONS = field(Extensions.class, "extensions", List.class);
         private static final Class<?> CONTEXT = type("TargetClassContext");
         private static final Class<?> INFO = type("MixinInfo");
         private static final Field ACTIVE_MIXINS = field(CONTEXT, "mixins", Collection.class);
@@ -69,6 +71,12 @@ final class MixinInternals {
         if (Application.CLASS_NODE.getType() != ClassNode.class) {
             throw new IllegalStateException("当前 Mixin 运行时的定义状态与 Mixin 0.8.7 不同");
         }
+    }
+
+    static void registerBeforeConsumers(Extensions extensions, IExtension extension) {
+        // Mixin 只公开追加接口。取消和注解修改应先于 MixinExtras 等读取注解的扩展。
+        extensions.add(extension);
+        Collections.rotate((List<?>) read(Application.EXTENSIONS, extensions), 1);
     }
 
     static Collection<?> activeMixins(ITargetClassContext context) {
