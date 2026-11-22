@@ -2,6 +2,12 @@ package com.modularmclib.mixinweaver.gametest.target;
 
 public class ScopeTarget {
 
+    protected int offset = 4;
+
+    protected int additionalOffset() {
+        return 6;
+    }
+
     public int value(boolean skipParent) {
         return 1;
     }
@@ -53,7 +59,9 @@ public class ScopeTarget {
 
     public interface Contract {
 
-        int score();
+        default int score() {
+            return 2;
+        }
     }
 
     public static class Implementation implements Contract {
@@ -63,4 +71,27 @@ public class ScopeTarget {
             return 4;
         }
     }
+
+    public static class DefaultDelegating implements Contract {
+
+        @Override
+        public int score() {
+            return Contract.super.score();
+        }
+    }
+
+    public static class Constructed {
+
+        private int count;
+
+        public int count() {
+            return count;
+        }
+
+        public void increment() {
+            count++;
+        }
+    }
+
+    public static class ConstructedChild extends Constructed {}
 }

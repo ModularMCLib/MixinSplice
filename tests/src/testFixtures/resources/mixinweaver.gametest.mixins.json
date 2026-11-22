@@ -12,7 +12,8 @@
 		"ScopeMixin",
 		"ScopeCompatibilityMixin",
 		"ScopeCancellationMixin",
-		"InterfaceScopeMixin"
+		"InterfaceScopeMixin",
+		"ConstructorScopeMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

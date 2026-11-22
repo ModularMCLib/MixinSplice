@@ -3,6 +3,7 @@ package com.modularmclib.mixinweaver.core.target;
 import com.modularmclib.mixinweaver.api.mixin.MixinSubject;
 import com.modularmclib.mixinweaver.api.target.DynamicTargets.Strategy;
 import com.modularmclib.mixinweaver.api.target.TargetContext;
+import com.modularmclib.mixinweaver.core.mixin.InjectionAnnotations;
 import com.modularmclib.mixinweaver.core.mixin.MixinBytecode;
 
 import org.objectweb.asm.Opcodes;
@@ -10,7 +11,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 import org.spongepowered.asm.mixin.refmap.IReferenceMapper;
-import org.spongepowered.asm.util.Annotations;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -55,7 +55,11 @@ public final class TargetAnalysis implements TargetContext {
             case SUBCLASSES -> subclassesOfDeclaredTargets();
             case IMPLEMENTERS -> implementersOfDeclaredTargets();
             case OVERRIDING, BYPASSING -> {
-                List<String> selectors = selectors(source);
+                List<String> selectors = InjectionAnnotations.selectors(source).toList();
+                if (selectors.stream().anyMatch(selector -> selector.contains("<init>"))) {
+                    // 构造器从不参与方法覆盖。每个子类都需要独立检查注入点。
+                    yield Stream.concat(subclassesOfDeclaredTargets().stream(), implementersOfDeclaredTargets().stream()).distinct().toList();
+                }
                 Predicate<MethodNode> matches = selectors.isEmpty() || selectors.stream().anyMatch(TargetAnalysis::uncertain) ? method -> true : selectors.stream().map(this::methodFilter).reduce(method -> false, Predicate::or);
                 yield findOverrides(matches, strategy == Strategy.BYPASSING);
             }
@@ -82,12 +86,14 @@ public final class TargetAnalysis implements TargetContext {
     private List<String> findOverrides(Predicate<MethodNode> filter, boolean onlyBypassing) {
         return Stream.concat(subclassesOfDeclaredTargets().stream(), implementersOfDeclaredTargets().stream())
                 .distinct()
-                .filter(name -> methods(name).anyMatch(method -> filter.test(method) && overrides(name, method) && (!onlyBypassing || !delegates(name, method))))
+                .filter(name -> methods(name).anyMatch(method -> filter.test(method) && overrides(name, method, onlyBypassing)))
                 .toList();
     }
 
-    private boolean overrides(String owner, MethodNode method) {
+    private boolean overrides(String owner, MethodNode method, boolean onlyBypassing) {
         return mixin.targets().stream().filter(target -> hierarchy.isAncestor(owner, target))
+                // 接口本身不应用注入器，Interface.super 调用也需要覆盖。
+                .filter(target -> !onlyBypassing || hierarchy.isInterface(target) || !delegates(owner, method))
                 .anyMatch(target -> Stream.concat(Stream.of(target), hierarchy.ancestors(target).stream()).anyMatch(
                         ancestor -> bytecode(ancestor).stream().flatMap(node -> node.methods.stream()).anyMatch(
                                 inherited -> inherited.name.equals(method.name) && inherited.desc.equals(method.desc) && isAccessible(inherited, owner, ancestor))));
@@ -125,14 +131,6 @@ public final class TargetAnalysis implements TargetContext {
     }
 
     private static boolean uncertain(String selector) {
-        return selector.startsWith("@") || selector.startsWith("/") || selector.contains("*") || selector.contains("{") || selector.contains("<init>") || selector.isBlank();
-    }
-
-    private static List<String> selectors(ClassNode node) {
-        return node.methods.stream().filter(method -> method.visibleAnnotations != null)
-                .flatMap(method -> method.visibleAnnotations.stream())
-                .filter(annotation -> annotation.desc.startsWith("Lorg/spongepowered/asm/mixin/injection/"))
-                .flatMap(annotation -> Annotations.<String>getValue(annotation, "method", true).stream())
-                .toList();
+        return selector.isBlank() || selector.startsWith("@") || selector.startsWith("/") || selector.contains("*") || selector.contains("{") || selector.contains("->");
     }
 }

@@ -14,8 +14,10 @@ import com.modularmclib.mixinweaver.core.target.TargetAnalysis;
 
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.spongepowered.asm.logging.ILogger;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.IClassTracker;
@@ -33,6 +35,7 @@ import java.util.Set;
 
 final class MixinPreparation {
 
+    private final ILogger logger = MixinService.getService().getLogger("mixinweaver");
     private final ConditionEvaluator conditions;
     private final PlatformEnvironment platform;
     private final Map<String, DynamicTargetProvider> providers;
@@ -89,6 +92,10 @@ final class MixinPreparation {
         var subject = new MixinSubject(mixin.getClassName(), config.getName(), declared);
         var context = new TargetAnalysis(subject, hierarchy, MixinInternals.referenceMapper(config));
         ClassNode bytecode = mixin.getClassNode(0);
+        if (MixinCloner.isAccessorOnly(bytecode)) {
+            logger.debug("跳过 {} 的动态副本，访问器由子类继承", subject.className());
+            return List.of();
+        }
         Strategy strategy = Annotations.getValue(annotation, "value", Strategy.class, Strategy.BYPASSING);
         String providerId = Annotations.getValue(annotation, "provider", "");
         boolean relax = Boolean.TRUE.equals(Annotations.getValue(annotation, "relaxRequirements"));
@@ -100,17 +107,34 @@ final class MixinPreparation {
         var result = new ArrayList<GeneratedMixin>();
         IClassTracker tracker = MixinService.getService().getClassTracker();
         for (String target : candidates) {
-            if (target.startsWith(mixinPackage) || hierarchy.isInterface(target) || (!packages.isEmpty() && packages.stream().noneMatch(prefix -> target.startsWith(prefix + "."))) || (tracker != null && tracker.isClassLoaded(target)) || !conditions.shouldApply(target, mixin.getClassName())) {
+            if (target.startsWith(mixinPackage) || hierarchy.isInterface(target) || (!packages.isEmpty() && packages.stream().noneMatch(prefix -> target.startsWith(prefix + ".")))) {
+                logger.debug("跳过 {} -> {}，目标类型或包名不符合范围", subject.className(), target);
+                continue;
+            }
+            if (tracker != null && tracker.isClassLoaded(target)) {
+                logger.warn("跳过 {} -> {}，目标类已加载", subject.className(), target);
+                continue;
+            }
+            if (!conditions.shouldApply(target, subject.className())) {
+                logger.debug("跳过 {} -> {}，选择条件未满足", subject.className(), target);
                 continue;
             }
             var plugin = config.getPlugin();
-            if (plugin == null || plugin.shouldApplyMixin(target, mixin.getClassName())) {
-                result.add(MixinCloner.clone(bytecode, mixinPackage, target, relax));
+            if (plugin != null && !plugin.shouldApplyMixin(target, subject.className())) {
+                logger.debug("跳过 {} -> {}，配置插件拒绝目标", subject.className(), target);
+                continue;
+            }
+            GeneratedMixin copy = MixinCloner.clone(bytecode, mixinPackage, target, relax);
+            if (copy != null) {
+                result.add(copy);
+                logger.debug("生成 {} -> {} 的动态副本 {}", subject.className(), target, copy.name());
             }
         }
-        if (!result.isEmpty() && bytecode.methods.stream().anyMatch(method -> method.visibleAnnotations != null && method.visibleAnnotations.stream().anyMatch(injection -> injection.desc.startsWith(
-                "Lorg/spongepowered/asm/mixin/injection/")))) {
+        if ((bytecode.access & Opcodes.ACC_INTERFACE) != 0 && InjectionAnnotations.hasInjectionOrOverwrite(bytecode)) {
             declared.stream().filter(hierarchy::isInterface).forEach(target -> MixinInternals.removeTarget(mixin, target));
+        }
+        if (Boolean.getBoolean("mixinweaver.targets.debug")) {
+            logger.info("{} 的 {} 个候选目标生成了 {} 个动态副本", subject.className(), candidates.size(), result.size());
         }
         return result;
     }

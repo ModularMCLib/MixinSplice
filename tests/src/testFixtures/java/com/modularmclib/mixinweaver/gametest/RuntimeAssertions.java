@@ -31,6 +31,9 @@ public final class RuntimeAssertions {
         assertTrue(bypassing.alternate() == 9, "注解调整应能通过原始 Mixin 名称匹配动态副本");
         assertTrue(new ScopeTarget.Cancelled().value(false) == 5, "取消规则应能通过原始 Mixin 名称匹配动态副本");
         assertTrue(new ScopeTarget.Implementation().score() == 14, "接口实现类应获得动态注入");
+        assertTrue(new ScopeTarget.DefaultDelegating().score() == 14, "委托接口默认方法的实现类也应获得动态注入");
+        assertTrue(new ScopeTarget.Constructed().count() == 1, "声明类的构造器应应用注入");
+        assertTrue(new ScopeTarget.ConstructedChild().count() == 2, "子类构造器应有自己的动态注入");
     }
 
     public static void selectsAndExpandsPluginMixins() {

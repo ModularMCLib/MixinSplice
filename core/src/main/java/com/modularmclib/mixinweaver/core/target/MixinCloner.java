@@ -1,7 +1,9 @@
 package com.modularmclib.mixinweaver.core.target;
 
 import com.modularmclib.mixinweaver.api.target.DynamicTargets;
+import com.modularmclib.mixinweaver.core.mixin.InjectionAnnotations;
 
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Opcodes;
@@ -13,11 +15,14 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.Group;
+import org.spongepowered.asm.mixin.gen.Accessor;
+import org.spongepowered.asm.mixin.gen.Invoker;
+import org.spongepowered.asm.service.MixinService;
 import org.spongepowered.asm.util.Annotations;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,13 +30,34 @@ public final class MixinCloner {
 
     private MixinCloner() {}
 
-    public static GeneratedMixin clone(ClassNode source, String mixinPackage, String target, boolean relax) {
+    public static boolean isAccessorOnly(ClassNode source) {
+        if ((source.access & Opcodes.ACC_INTERFACE) == 0) {
+            return false;
+        }
+        var methods = source.methods.stream().filter(method -> (method.access & Opcodes.ACC_SYNTHETIC) == 0).toList();
+        return !methods.isEmpty() && methods.stream().allMatch(method -> Annotations.getVisible(method, Accessor.class) != null || Annotations.getVisible(method, Invoker.class) != null);
+    }
+
+    public static @Nullable GeneratedMixin clone(ClassNode source, String mixinPackage, String target, boolean relax) {
         String name = source.name + "$MixinWeaver$" + UUID.nameUUIDFromBytes((source.name + "#" + target).getBytes(StandardCharsets.UTF_8)).toString().replace("-", "");
+        var mappings = new HashMap<String, String>();
+        mappings.put(source.name, name);
+        var copy = new ClassNode();
+        source.accept(copy);
+        var unavailable = ShadowMembers.prepare(copy, target, mappings);
+        if (unavailable.isPresent()) {
+            MixinService.getService().getLogger("mixinweaver").warn("跳过 {} -> {}：{}", source.name, target, unavailable.get());
+            return null;
+        }
         ClassNode clone = new ClassNode();
-        // ASM 9.9 起才支持传入 API 版本，早期加载器需要两参数构造函数。
+        // ASM 9.9 起才支持传入 API 版本，早期加载器使用旧构造函数。
         @SuppressWarnings({ "deprecation", "RedundantSuppression" })
-        var remapper = new SimpleRemapper(source.name, name);
-        source.accept(new ClassRemapper(clone, remapper));
+        var remapper = new SimpleRemapper(mappings);
+        copy.accept(new ClassRemapper(clone, remapper));
+        if (clone.innerClasses != null) {
+            clone.innerClasses.stream().filter(inner -> inner.outerName == null && inner.name.startsWith(source.name + "$"))
+                    .forEach(inner -> inner.outerName = name);
+        }
         if ((clone.access & Opcodes.ACC_INTERFACE) != 0) {
             convertInterface(clone);
         }
@@ -49,7 +75,7 @@ public final class MixinCloner {
         mixin.visit("value", List.of(Type.getObjectType(target.replace('.', '/'))));
         clone.invisibleAnnotations.removeIf(annotation -> annotation.desc.equals(Type.getDescriptor(DynamicTargets.class)));
         if (relax) {
-            relaxRequirements(clone);
+            InjectionAnnotations.relax(clone);
         }
         var writer = new ClassWriter(0);
         clone.accept(writer);
@@ -74,21 +100,6 @@ public final class MixinCloner {
                             dynamic.bsmArgs[i] = new Handle(tag, handle.getOwner(), handle.getName(), handle.getDesc(), false);
                         }
                     }
-                }
-            }
-        }
-    }
-
-    private static void relaxRequirements(ClassNode node) {
-        for (var method : node.methods) {
-            if (method.visibleAnnotations == null) {
-                continue;
-            }
-            method.visibleAnnotations.removeIf(annotation -> Type.getDescriptor(Group.class).equals(annotation.desc));
-            for (AnnotationNode annotation : method.visibleAnnotations) {
-                if (annotation.desc.startsWith("Lorg/spongepowered/asm/mixin/injection/") && Annotations.getValue(annotation, "method") != null) {
-                    Annotations.setValue(annotation, "require", 0);
-                    Annotations.setValue(annotation, "expect", 0);
                 }
             }
         }
