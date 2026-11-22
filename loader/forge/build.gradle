@@ -16,7 +16,7 @@ dependencies {
 
 ext.platformMetadata = [
         loader_version_range    : '[51,)',
-        platform_version_range  : "[${libs.versions.forgeLoaderMinimum.get()},)",
+        platform_version_range  : "[${libs.versions.forgeLoaderMinimum.get()},62)",
         minecraft_version_range : '[1.21,)'
 ]
 
