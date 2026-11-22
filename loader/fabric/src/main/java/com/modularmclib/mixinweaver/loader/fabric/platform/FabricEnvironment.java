@@ -1,0 +1,37 @@
+package com.modularmclib.mixinweaver.loader.fabric.platform;
+
+import com.modularmclib.mixinweaver.api.condition.ConditionResult;
+import com.modularmclib.mixinweaver.core.platform.PlatformEnvironment;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
+import net.fabricmc.loader.api.metadata.version.VersionPredicate;
+
+import java.nio.file.Path;
+import java.util.List;
+
+public final class FabricEnvironment implements PlatformEnvironment {
+
+    @Override
+    public List<Path> classpathRoots() {
+        return FabricLoader.getInstance().getAllMods().stream()
+                .filter(mod -> !mod.getMetadata().getId().equals("java"))
+                .flatMap(mod -> mod.getRootPaths().stream()).distinct().toList();
+    }
+
+    @Override
+    public ConditionResult mod(String modId, String versionPredicate) {
+        return FabricLoader.getInstance().getModContainer(modId)
+                .map(mod -> ConditionResult.of(matches(mod.getMetadata().getVersion(), versionPredicate)))
+                .orElse(ConditionResult.FALSE);
+    }
+
+    private static boolean matches(Version actual, String predicate) {
+        try {
+            return predicate.isBlank() || VersionPredicate.parse(predicate).test(actual);
+        } catch (VersionParsingException exception) {
+            throw new IllegalArgumentException("无效的 Fabric Mod 版本谓词 " + predicate, exception);
+        }
+    }
+}

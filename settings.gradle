@@ -15,16 +15,26 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven {
+            name = 'Minecraft Libraries'
+            url = 'https://libraries.minecraft.net/'
+            content { includeGroup('com.mojang') }
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+            content { includeGroup('net.fabricmc') }
+        }
+        maven {
+            name = 'Forge'
+            url = 'https://maven.minecraftforge.net/'
+            content { includeGroup('net.minecraftforge') }
+        }
+        maven {
             name = 'SpongePowered'
             url = 'https://repo.spongepowered.org/maven/'
             content {
                 includeModule('org.spongepowered', 'mixin')
             }
-        }
-    }
-    versionCatalogs {
-        forge {
-            from(files("gradle/forge.versions.toml"))
         }
     }
 }

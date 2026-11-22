@@ -1,5 +1,29 @@
 plugins {
-    id 'base'
+    id 'java-library'
 }
 
 description = 'Forge 平台接入与发行'
+
+dependencies {
+    compileOnly project(':core')
+    compileOnly(libs.forge.loader)
+    compileOnly(libs.forge.core)
+    compileOnly(libs.forge.securemodules)
+    compileOnly(libs.maven.artifact)
+    testCompileOnly(libs.mixin)
+    testCompileOnly(libs.asm.tree)
+}
+
+ext.platformMetadata = [
+        loader_version_range    : '[51,)',
+        platform_version_range  : "[${libs.versions.forgeLoaderMinimum.get()},)",
+        minecraft_version_range : '[1.21,)'
+]
+
+apply from: "$rootDir/gradle/scripts/resources.gradle"
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
+
+tasks.named('testModJar', Jar) {
+    manifest.attributes('MixinConfigs': 'mixinweaver.gametest.mixins.json,mixinweaver.plugin.gametest.mixins.json,mixinweaver.forge.gametest.mixins.json')
+}

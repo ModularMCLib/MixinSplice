@@ -1,0 +1,15 @@
+modLoader = "lowcodefml"
+loaderVersion = "[51,)"
+license = "GNU AGPL 3.0"
+
+[[mods]]
+modId = "mixinweaver_runtime_test"
+version = "1"
+displayName = "MixinWeaver Runtime Test"
+
+[[dependencies.mixinweaver_runtime_test]]
+modId = "mixinweaver"
+mandatory = true
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "SERVER"

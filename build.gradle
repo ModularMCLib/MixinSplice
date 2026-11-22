@@ -29,7 +29,7 @@ subprojects {
 apply from: "$rootDir/gradle/scripts/spotless.gradle"
 
 tasks.named('assemble') {
-    dependsOn ':loader:neoforge:assemble'
+    dependsOn ':loader:fabric:assemble', ':loader:forge:assemble', ':loader:neoforge:assemble'
 }
 
 tasks.register('printVersion') {

@@ -1,8 +1,13 @@
 plugins {
     id 'java'
+    id 'java-test-fixtures'
 }
 
 dependencies {
+    testFixturesImplementation project(':api')
+    testFixturesCompileOnly libs.mixin
+    testFixturesCompileOnly libs.asm.tree
+    testFixturesCompileOnly libs.jspecify
     testImplementation project(':core')
     testImplementation libs.mixin
     testImplementation libs.asm.tree

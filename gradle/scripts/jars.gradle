@@ -1,20 +1,33 @@
-def bundledJars = configurations.bundledJars
+configurations {
+    bundledSources {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    [':api', ':core'].each { module ->
+        bundledSources(project(path: module, configuration: 'sourcesElements'))
+    }
+}
+
 def bundledSources = configurations.bundledSources
 
-def includeModuleJars = { Jar archive ->
-    archive.dependsOn(bundledJars)
-    archive.from { bundledJars.collect { zipTree(it) } }
+tasks.named('processResources', ProcessResources) {
+    // 将共享输出合入平台模组，使开发运行与发行包使用相同的类和资源。
+    from project(':api').sourceSets.main.output
+    from project(':core').sourceSets.main.output
+    duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 
 def mainArchive = tasks.named('jar', Jar) { archive ->
     exclude "**/.cache"
-    includeModuleJars(archive)
 }
 
 def slimArchive = tasks.register('slimJar', Jar) { archive ->
     archiveClassifier = "slim"
     from sourceSets.main.output
-    includeModuleJars(archive)
 }
 
 def sourcesArchive = tasks.named('sourcesJar', Jar) {

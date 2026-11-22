@@ -1,47 +1,20 @@
-String getConfig(String key) {
-    return project.property(key).toString()
-}
-
-def mod_id = getConfig("mod_id")
-def version = getConfig("version")
-def mod_license = getConfig("mod_license")
-def mod_name = getConfig("mod_name")
-def mod_description = getConfig("mod_description")
-def mod_url = getConfig("mod_url")
-def mod_issue_tracker = getConfig("mod_issue_tracker")
-
 String suffix = System.getenv("VERSION_SUFFIX")
-String version_toml = "$version" + (suffix ? "+$suffix" : "")
 
-// 为各运行配置创建独立目录，隔离开发环境的运行数据。
-tasks.matching { it.name.startsWith('prepare') }.configureEach {
-    doFirst {
-        mkdir('run/client')
-        mkdir('run/server')
-        mkdir('run/gametest')
-        mkdir('run/data')
-    }
-}
+def replaceProperties = [
+        version          : project.version.toString() + (suffix ? "+$suffix" : ""),
+        mod_id           : mod_id,
+        mod_license      : mod_license,
+        mod_name         : mod_name,
+        mod_description  : mod_description,
+        mod_url          : mod_url,
+        mod_issue_tracker: mod_issue_tracker
+] + platformMetadata
 
-var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
-    var neoVersion = libs.versions.neoForge.get()
-    neoVersion = neoVersion.substring(0, neoVersion.lastIndexOf('.'))
-    var replaceProperties = [
-            version                 : version_toml,
-            mod_id                  : mod_id,
-            minecraft_version       : "[1.21,)",
-            loader_version          : libs.versions.loader.get(),
-            neo_version             : neoVersion,
-            mod_license             : mod_license,
-            mod_name                : mod_name,
-            mod_description         : mod_description,
-            mod_url                 : mod_url,
-            mod_issue_tracker       : mod_issue_tracker
-    ]
+def generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     inputs.properties replaceProperties
     expand replaceProperties
-    from "src/main/templates"
-    into "build/generated/sources/modMetadata"
+    from 'src/main/templates'
+    into layout.buildDirectory.dir('generated/sources/modMetadata')
 }
+
 sourceSets.main.resources.srcDir generateModMetadata
-neoForge.ideSyncTask generateModMetadata

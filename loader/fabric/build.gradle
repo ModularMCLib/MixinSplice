@@ -1,5 +1,20 @@
 plugins {
-    id 'base'
+    id 'java-library'
 }
 
 description = 'Fabric 平台接入与发行'
+
+dependencies {
+    compileOnly project(':core')
+    compileOnly(libs.fabricLoader)
+    testCompileOnly(libs.fabricLoader)
+}
+
+ext.platformMetadata = [
+        platform_version_range  : ">=${libs.versions.fabricLoaderMinimum.get()}",
+        minecraft_version_range : '>=1.21'
+]
+
+apply from: "$rootDir/gradle/scripts/resources.gradle"
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"

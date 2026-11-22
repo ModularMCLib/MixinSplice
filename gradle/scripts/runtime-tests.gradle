@@ -1,0 +1,22 @@
+dependencies {
+    testImplementation(testFixtures(project(':tests')))
+}
+
+def fixtures = project(':tests').tasks.named('testFixturesJar', Jar)
+def testMod = tasks.register('testModJar', Jar) {
+    archiveClassifier = 'test-mod'
+    from sourceSets.test.output
+    dependsOn fixtures
+    from { zipTree(fixtures.get().archiveFile.get().asFile) }
+    manifest.attributes('MixinConfigs': 'mixinweaver.gametest.mixins.json,mixinweaver.plugin.gametest.mixins.json')
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+
+tasks.named('test', Test) {
+    // 这些用例由服务器中的测试模组执行。
+    failOnNoDiscoveredTests = false
+}
+
+tasks.named('check') {
+    dependsOn testMod
+}

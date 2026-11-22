@@ -1,0 +1,37 @@
+subsystems {
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+runs {
+    configureEach {
+        workingDirectory project.layout.projectDirectory.dir('run').dir(name)
+        modSources.add(mod_id, sourceSets.main)
+        modSources.primary(sourceSets.main)
+        jvmArgument "-ea:${maven_group}..."
+        systemProperty 'forge.logging.console.level', 'info'
+    }
+
+    client {}
+    server {
+        argument '--nogui'
+    }
+    gameTestServer {
+        modSources.add(mod_id, sourceSets.test)
+        systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        arguments.addAll '--mixin.config', 'mixinweaver.gametest.mixins.json', '--mixin.config', 'mixinweaver.plugin.gametest.mixins.json'
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

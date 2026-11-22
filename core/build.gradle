@@ -8,4 +8,5 @@ dependencies {
     compileOnly libs.asm.tree
     compileOnly libs.asm.commons
     compileOnly libs.jspecify
+    compileOnly libs.maven.artifact
 }

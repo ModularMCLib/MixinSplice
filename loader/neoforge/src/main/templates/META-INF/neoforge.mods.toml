@@ -1,5 +1,5 @@
-modLoader = "javafml"
-loaderVersion = "[${loader_version},)"
+modLoader = "lowcodefml"
+loaderVersion = "${loader_version_range}"
 issueTrackerURL = "${mod_issue_tracker}"
 license = "${mod_license}"
 
@@ -9,27 +9,19 @@ version = "${version}"
 displayName = "${mod_name}"
 authors = "QiuYe"
 description = "${mod_description}"
-#logoFile = "icon.png"
 displayURL = "${mod_url}"
-credits = ""
-
-enumExtensions = "META-INF/enum_extensions.json"
 
 [[mixins]]
     config = "${mod_id}.mixins.json"
-[[accessTransformers]]
-    file = "META-INF/accesstransformer.cfg"
-
-
 [[dependencies.${mod_id}]]
     modId = "neoforge"
     type = "required"
-    versionRange = "[${neo_version},)"
+    versionRange = "${platform_version_range}"
     ordering = "NONE"
     side = "BOTH"
 [[dependencies.${mod_id}]]
     modId = "minecraft"
     type = "required"
-    versionRange = "${minecraft_version}"
+    versionRange = "${minecraft_version_range}"
     ordering = "NONE"
     side = "BOTH"
