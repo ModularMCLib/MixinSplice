@@ -27,7 +27,7 @@ neoForge {
     addModdingDependenciesTo(sourceSets.extra)
 
     mods {
-        // define mod <-> source bindings
+        // 将各源集绑定到模组。
         "${mod_id}" {
             sourceSet(sourceSets.main)
             sourceSet(sourceSets.client)
@@ -58,9 +58,9 @@ neoForge {
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
         }
 
-        // This run config launches GameTestServer and runs all registered gametests, then exits.
-        // By default, the server will crash when no gametests are provided.
-        // The gametest system is also enabled by default for other run configs under the /test command.
+        // 启动 GameTestServer，执行所有已注册的 GameTest 后退出。
+        // 缺少 GameTest 用例时，服务端默认会报错退出。
+        // 其他运行配置默认也可通过 /test 命令使用 GameTest。
         gameTestServer {
             type = "gameTestServer"
             sourceSet = sourceSets.test
@@ -87,27 +87,25 @@ neoForge {
             ideName = "Data Generation"
 
             gameDirectory.set(file('run/data'))
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
+            // 指定数据生成使用的 Mod ID、生成目录和现有资源目录。
             programArguments.addAll('--mod', project.mod_id)
             programArguments.addAll('--all')
             programArguments.addAll('--output', file('src/generated/resources/').getAbsolutePath())
             programArguments.addAll('--existing', file('src/main/resources/').getAbsolutePath())
         }
 
-        // applies to all the run configs above
+        // 应用于上方的所有运行配置。
         configureEach {
-            // Recommended logging data for a userdev environment
-            // The markers can be added/remove as needed separated by commas.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
+            // 开发环境的日志标记可按需增删，并用逗号分隔。
+            // SCAN 记录模组扫描。
+            // REGISTRIES 记录注册表事件。
+            // REGISTRYDUMP 输出各注册表的内容。
             systemProperty 'forge.logging.markers', 'REGISTRIES'
-            // Enable assertions for our classes in dev environment
+            // 为开发环境中的项目代码启用断言。
             jvmArgument("-ea:${maven_group}...")
 
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+            // 此处可调整控制台日志级别。
+            // 各级别的适用场景见 https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             logLevel = Level.INFO
         }
     }

@@ -1,8 +1,8 @@
 repositories {
     mavenLocal()
     mavenCentral()
-    // force gradle to download FastUtil & LWJGL from the central maven so we can get source artifacts
-    exclusiveContent { // Force
+    // 从 Maven Central 获取 FastUtil 和 LWJGL，以便下载对应的源码包。
+    exclusiveContent { // 限定以下依赖的来源
         forRepository { mavenCentral() }
         filter {
             includeGroup("it.unimi.dsi")
@@ -18,19 +18,19 @@ repositories {
         name = "Jared's Maven"
         url = "https://maven.blamejared.com/"
     }
-    maven { // JEI mirror, AE2
+    maven { // JEI 镜像及 AE2
         name = "ModMaven"
         url = "https://modmaven.dev"
     }
-    exclusiveContent { // terraformers - EMI
+    exclusiveContent { // Terraformers 的 EMI 仓库
         forRepository { maven { url = "https://maven.terraformersmc.com/releases/" } }
         filter { includeGroup("dev.emi") }
     }
-    exclusiveContent { // Modrinth Maven
+    exclusiveContent { // Modrinth Maven 仓库
         forRepository { maven { url = "https://api.modrinth.com/maven" } }
         filter { includeGroup("maven.modrinth") }
     }
-    exclusiveContent { // Curseforge Maven
+    exclusiveContent { // CurseForge Maven 仓库
         forRepository { maven { url = "https://cursemaven.com" } }
         filter { includeGroup("curse.maven") }
     }

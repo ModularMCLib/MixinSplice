@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ['**']
 
-# Cancel previous jobs if PR gets another push
+# PR 收到新提交时取消上一轮任务。
 concurrency:
   group: PR-test-${{ github.ref }}
   cancel-in-progress: true

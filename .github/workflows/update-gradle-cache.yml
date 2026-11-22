@@ -1,4 +1,4 @@
-# Updates the Gradle Cache when necessary
+# 按需更新 Gradle 缓存。
 name: Update Gradle Cache
 
 on:

@@ -1,7 +1,7 @@
-# All other changes require the primary team
+# 其他路径由主开发团队审查。
 * @ExtremelyFrozen/devs
 
-# Specific files requiring admin approval
+# 以下文件由管理员团队审查。
 CODEOWNERS @ExtremelyFrozen/admin
 LICENSE @ExtremelyFrozen/admin
 /README.md @ExtremelyFrozen/admin

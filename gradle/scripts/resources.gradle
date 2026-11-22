@@ -13,7 +13,7 @@ def mod_issue_tracker = getConfig("mod_issue_tracker")
 String suffix = System.getenv("VERSION_SUFFIX")
 String version_toml = "$version" + (suffix ? "+$suffix" : "")
 
-// Create run-folders for non-client configs to avoid pollution of dev envs
+// 为各运行配置创建独立目录，隔离开发环境的运行数据。
 tasks.matching { it.name.startsWith('prepare') }.configureEach {
     doFirst {
         mkdir('run/client')

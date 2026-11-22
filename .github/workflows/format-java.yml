@@ -1,4 +1,4 @@
-# Runs formatting requirements
+# 检查源码格式。
 name: Java Formatting
 
 on:
@@ -27,7 +27,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # do a full checkout instead of a shallow clone of HEAD so spotless's ratchetFrom works
+          fetch-depth: 0 # Spotless 的 ratchetFrom 需要完整提交历史。
       - name: Check Path Filter
         uses: dorny/paths-filter@v3
         id: filter

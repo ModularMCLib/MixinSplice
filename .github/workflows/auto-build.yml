@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # do a full checkout instead of a shallow clone of HEAD so spotless's ratchetFrom works
+          fetch-depth: 0 # Spotless 的 ratchetFrom 需要完整提交历史。
       - name: Setup Build
         uses: ./.github/actions/build_setup
       - name: Grant execute permission for gradlew

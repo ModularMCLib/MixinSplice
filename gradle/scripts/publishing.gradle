@@ -7,9 +7,9 @@ publishing {
 //        }
 //    }
 
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    // Maven 发布配置参见 https://docs.gradle.org/current/userguide/publishing_maven.html
     repositories {
-//         Add repositories to publish to here.
+//         在此配置发布目标仓库。
 //        maven {
 //            url = "https://maven.gtceu.com"
 //            credentials {

@@ -6,14 +6,14 @@ dependencies {
     testImplementation(libs.testframework.get())
 
 
-    // Runtime Recipe Viewers - uncomment whichever one you want to use //
+    // 运行时配方查看器，按需启用对应依赖 //
 
-    // Client-only runtime mods //
+    // 仅在客户端加载的运行时 Mod //
 
     renderNurseCfg(libs.renderNurse)
 
     //////////////////////////////////////////////////////
-    // Runtime mods for dev testing with unclean client //
+    // 用于带其他 Mod 的开发客户端测试的运行时依赖 //
     //////////////////////////////////////////////////////
 
     //////////////////////////

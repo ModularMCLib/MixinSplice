@@ -3,7 +3,7 @@ plugins {
     alias libs.plugins.spotless
 }
 
-// Share the base Maven group and snapshot version across MixinWeaver modules.
+// 各模块共用 Maven 基础分组和快照版本。
 boolean isSnapshot = System.getenv("SNAPSHOT")
 String buildVersion = "${mod_version}" + (isSnapshot ? "-SNAPSHOT" : "")
 

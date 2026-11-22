@@ -1,11 +1,11 @@
 [versions]
 
 
-## modrinth maven ##
+## Modrinth Maven 依赖 ##
 
-## curseforge maven ##
+## CurseForge Maven 依赖 ##
 
-## libs ##
+## 其他库 ##
 
 
 [libraries]

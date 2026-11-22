@@ -146,7 +146,7 @@ jobs:
   #          java: ${{ env.JAVA }}
   #          fail-mode: fail
 
-  # After successful release, PR version bump and changelog
+  # 发布成功后，通过 PR 更新版本号和变更日志。
   bump-version-and-changelog:
     name: Bump Version and Build Changelog
     needs: [ build, upload-release-artifacts ]
