@@ -3,10 +3,12 @@ package com.modularmclib.mixinweaver.gametest.forge;
 import com.modularmclib.mixinweaver.gametest.RuntimeAssertions;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@Pseudo
 @Mixin(targets = "net.minecraft.server.Main", remap = false)
 abstract class ForgeMainMixin {
 

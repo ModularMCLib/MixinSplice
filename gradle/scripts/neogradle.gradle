@@ -25,7 +25,8 @@ runs {
     gameTestServer {
         modSources.add(mod_id, sourceSets.test)
         systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-        arguments.addAll '--mixin.config', 'mixinweaver.gametest.mixins.json', '--mixin.config', 'mixinweaver.plugin.gametest.mixins.json'
+        arguments.addAll '--mixin.config', 'mixinweaver.gametest.mixins.json', '--mixin.config', 'mixinweaver.plugin.gametest.mixins.json',
+                '--mixin.config', 'mixinweaver.extras.gametest.mixins.json'
     }
 }
 
