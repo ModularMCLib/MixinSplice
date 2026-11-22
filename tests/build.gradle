@@ -1,0 +1,8 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    testImplementation project(':core')
+    testImplementation project(':integration:mixin')
+}

@@ -22,8 +22,8 @@ jobs:
         with:
           filters: |
             code:
-              - 'src/**'
-              - '*.gradle'
+              - '**/src/**'
+              - '**/*.gradle'
               - 'gradle.properties'
               - 'gradlew*'
               - 'gradle/**'

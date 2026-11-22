@@ -1,3 +1,5 @@
+import org.slf4j.event.Level
+
 neoForge {
     version = libs.versions.neoForge.get()
 
@@ -101,12 +103,12 @@ neoForge {
             // "REGISTRYDUMP": For getting the contents of all registries.
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             // Enable assertions for our classes in dev environment
-            jvmArgument('-ea:com.extfro.template...')
+            jvmArgument("-ea:${maven_group}...")
 
             // Recommended logging level for the console
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            logLevel = org.slf4j.event.Level.INFO
+            logLevel = Level.INFO
         }
     }
 }

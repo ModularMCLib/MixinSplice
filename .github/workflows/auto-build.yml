@@ -3,7 +3,7 @@ name: Latest Build
 on:
   push:
     branches: ['1.21']
-    paths: ['src/**', '**/*.gradle', 'gradle.properties']
+    paths: ['**/src/**', '**/*.gradle', 'gradle.properties', 'gradle/**', 'gradlew*']
 
 concurrency:
   group: auto-build-${{ github.ref }}
@@ -65,7 +65,7 @@ jobs:
           name: '${{ github.ref_name }}-${{ steps.ver.outputs.version}} SNAPSHOT ${{ env.VERSION_SUFFIX }}'
           prerelease: true
           body: |
-            The latest build of Template for Minecraft ${{ github.ref_name }}.
-            Please report any [issues](https://github.com/ExtremelyFrozen/ExtremelyFrozen-Template/issues).
+            The latest build of MixinWeaver for Minecraft ${{ github.ref_name }}.
+            Please report any [issues](${{ github.server_url }}/${{ github.repository }}/issues).
             ${{ steps.changelog.outputs.changelog }}
           files: build/libs/*.jar

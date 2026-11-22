@@ -1,4 +1,4 @@
-package com.extfro.template.common;
+package com.modularmclib.mixinweaver.loader.neoforge.bootstrap;
 
 import net.neoforged.bus.api.IEventBus;
 

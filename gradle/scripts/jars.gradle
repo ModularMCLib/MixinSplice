@@ -1,40 +1,44 @@
-jar {
+import org.gradle.jvm.tasks.Jar
+
+def bundledJars = configurations.bundledJars
+def bundledSources = configurations.bundledSources
+
+def includeModuleJars = { Jar archive ->
+    archive.dependsOn(bundledJars)
+    archive.from { bundledJars.collect { zipTree(it) } }
+}
+
+tasks.named('jar', Jar) { archive ->
     exclude "**/.cache"
+    includeModuleJars(archive)
 }
 
-tasks.register('slimJar', Jar) {
-    dependsOn("classes")
+tasks.register('slimJar', Jar) { archive ->
     archiveClassifier = "slim"
-    from sourceSets.main.output
+    includeModuleJars(archive)
 }
 
-java {
-    withSourcesJar()
-}
-
-// Use delombok'd files for sources
 sourcesJar {
-    exclude {
-        sourceSets.main.allSource.contains it.file
-    }
-    from delombok
+    dependsOn(bundledSources)
+    from { bundledSources.collect { zipTree(it) } }
 }
 
 base {
-    archivesName = "${project.name}-${libs.versions.minecraft.get()}"
+    archivesName = "${mod_id}-${project.name}-${libs.versions.minecraft.get()}"
 }
 
 afterEvaluate {
-    tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {
-        destinationDirectory = file('build/libs/')
+    tasks.withType(Jar).configureEach {
+        destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+        duplicatesStrategy = DuplicatesStrategy.FAIL
         manifest.attributes([
-                'MixinConfigs': "template.mixins.json",
-                'Specification-Title': project.name,
+                'MixinConfigs': "${mod_id}.mixins.json",
+                'Specification-Title': mod_name,
                 'Specification-Version': mod_version,
-                'Specification-Vendor': 'ExtremelyFrozen Team',
-                'Implementation-Title': base.archivesName,
+                'Specification-Vendor': 'ModularMCLib',
+                'Implementation-Title': base.archivesName.get(),
                 'Implementation-Version': version,
-                'Implementation-Vendor': 'ExtremelyFrozen Team',
+                'Implementation-Vendor': 'ModularMCLib',
         ])
     }
 }

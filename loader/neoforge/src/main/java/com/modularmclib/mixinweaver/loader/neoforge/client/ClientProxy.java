@@ -1,4 +1,4 @@
-package com.extfro.template.client;
+package com.modularmclib.mixinweaver.loader.neoforge.client;
 
 import net.neoforged.bus.api.IEventBus;
 

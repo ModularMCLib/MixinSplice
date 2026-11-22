@@ -1,5 +1,5 @@
 String getConfig(String key) {
-    return project.properties.get(key)
+    return project.property(key).toString()
 }
 
 def mod_id = getConfig("mod_id")
@@ -12,12 +12,6 @@ def mod_issue_tracker = getConfig("mod_issue_tracker")
 
 String suffix = System.getenv("VERSION_SUFFIX")
 String version_toml = "$version" + (suffix ? "+$suffix" : "")
-
-tasks.register('printVersion') {
-    doLast {
-        println mod_version
-    }
-}
 
 // Create run-folders for non-client configs to avoid pollution of dev envs
 tasks.matching { it.name.startsWith('prepare') }.configureEach {

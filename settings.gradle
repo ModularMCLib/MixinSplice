@@ -17,6 +17,13 @@ plugins {
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        maven {
+            name = 'SpongePowered'
+            url = 'https://repo.spongepowered.org/maven/'
+            content {
+                includeModule('org.spongepowered', 'mixin')
+            }
+        }
     }
     versionCatalogs {
         forge {
@@ -25,4 +32,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "${mod_id}"
+rootProject.name = mod_name
+
+include 'api', 'core', 'integration:mixin'
+include 'loader:fabric', 'loader:forge', 'loader:neoforge'
+include 'distribution:fabric', 'distribution:forge', 'distribution:neoforge'
+include 'tests'

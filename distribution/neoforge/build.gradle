@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    //alias libs.plugins.shadow
+}
+
+configurations {
+    bundledJars {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+    bundledSources {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    // The loader provides Minecraft and Mixin at runtime. Package only MixinWeaver modules.
+    [':api', ':core', ':integration:mixin', ':loader:neoforge'].each { module ->
+        bundledJars(project(path: module, configuration: 'runtimeElements'))
+        bundledSources(project(path: module, configuration: 'sourcesElements'))
+    }
+}
+
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
