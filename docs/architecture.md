@@ -1,6 +1,6 @@
 # MixinWeaver 架构
 
-MixinWeaver 将动态目标发现、跨 Mixin 扩展和条件选择纳入统一的扩展框架。框架共享扩展注册、排序、生命周期、运行上下文和诊断设施。PolyMixin、MixinSquared 和 ConditionalMixin 提供能力参考，具体契约由 MixinWeaver 定义。
+MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标发现、跨 Mixin 注入和条件选择共用 MixinWeaver 的注册、排序、生命周期、运行上下文和诊断设施。PolyMixin、MixinSquared 和 ConditionalMixin 提供能力参考，具体契约由 MixinWeaver 定义。
 
 当前阶段完成项目命名、Gradle 模块划分和 NeoForge 模板迁移。以下生命周期、子系统及接口约束用于后续源码审查和实现。
 
@@ -34,7 +34,7 @@ MixinWeaver 将动态目标发现、跨 Mixin 扩展和条件选择纳入统一�
 
 两个入口共享扩展注册表和执行上下文。Mixin 的 `IExtensionRegistry` 提供查询，扩展添加由具体的 `Extensions` 提供。集成层需验证注册时机、活动扩展列表与排序的对应关系，以及当前 Mixin 运行时是否满足所需能力。
 
-框架内排序根据扩展声明的 `before` 和 `after` 约束求解，并在初始化时诊断冲突。集成层将结果映射到 Mixin 可控的阶段和扩展顺序，并报告运行时无法满足的顺序约束。其他 Mod 的扩展顺序由 Mixin 管理。
+MixinWeaver 根据扩展声明的 `before` 和 `after` 约束确定执行顺序，并在初始化时诊断冲突。集成层将结果映射到 Mixin 可控的阶段和扩展顺序，并报告运行时无法满足的顺序约束。其他 Mod 的扩展顺序由 Mixin 管理。
 
 ## 子系统
 
@@ -51,7 +51,7 @@ MixinWeaver 将动态目标发现、跨 Mixin 扩展和条件选择纳入统一�
 
 目标处理依次完成类发现、继承关系分析、方法控制流分析和候选选择，最后由 Mixin 集成层应用目标集合。目标基类方法的继承者与始终调用父类实现的覆盖者通常已受到基类注入影响，绕过父类实现的覆盖者可能需要单独注入。部分路径调用父类、部分路径绕过时，需要验证重复触发的边界。
 
-目标选择需支持子类、接口实现、方法覆盖和 `super` 调用，考虑 Refmap、运行时可见类路径、嵌套 JAR 和无法准确推导的选择器。注入策略负责生成目标所需的 `require` 调整。扫描结果通过框架模型传递，以保持公共 API 独立于 ClassGraph。
+目标选择需支持子类、接口实现、方法覆盖和 `super` 调用，考虑 Refmap、运行时可见类路径、嵌套 JAR 和无法准确推导的选择器。注入策略负责生成目标所需的 `require` 调整。扫描结果通过 MixinWeaver 的目标模型传递，以保持公共 API 独立于 ClassGraph。
 
 ### Handler 与转换
 
