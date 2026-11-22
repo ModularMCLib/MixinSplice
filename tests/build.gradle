@@ -4,5 +4,4 @@ plugins {
 
 dependencies {
     testImplementation project(':core')
-    testImplementation project(':integration:mixin')
 }

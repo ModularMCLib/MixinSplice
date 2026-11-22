@@ -19,7 +19,7 @@ configurations {
 
 dependencies {
     // 发行包只收录 MixinWeaver 模块，Minecraft 和 Mixin 由 Loader 在运行时提供。
-    [':api', ':core', ':integration:mixin', ':loader:neoforge'].each { module ->
+    [':api', ':core', ':loader:neoforge'].each { module ->
         bundledJars(project(path: module, configuration: 'runtimeElements'))
         bundledSources(project(path: module, configuration: 'sourcesElements'))
     }
