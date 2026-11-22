@@ -1,103 +1,66 @@
 # MixinWeaver 架构
 
-MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标发现、跨 Mixin 注入和条件选择共用 MixinWeaver 的注册、排序、生命周期、运行上下文和诊断设施。PolyMixin、MixinSquared 和 ConditionalMixin 提供能力参考，具体契约由 MixinWeaver 定义。
-
-当前阶段完成项目命名、Gradle 模块划分和 NeoForge 模板迁移。以下生命周期、子系统及接口约束用于后续源码审查和实现。
+MixinWeaver 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入和条件选择共用扩展注册、执行顺序与生命周期接入。
 
 ## 模块边界
 
-| Gradle 模块 | 职责 | 当前状态 |
-| --- | --- | --- |
-| `:api` | 公开扩展契约和稳定的数据模型 | Java 库模块 |
-| `:core` | 注册、排序、生命周期、诊断、子系统规则和 Mixin 对接 | Java 库模块，依赖 API，编译期使用 Mixin |
-| `:loader:fabric`、`:loader:forge` | 对应平台的启动接入、开发运行和发行 | Gradle 模块结构 |
-| `:loader:neoforge` | NeoForge 入口、模组元数据、开发运行、GameTest 和发行 | 使用 ModDevGradle，生成主 JAR、源码 JAR 和独立的 slim JAR |
-| `:tests` | 单元、字节码、Mixin 生命周期和集成测试 | JVM 测试项目，NeoForge GameTest 由 Loader 模块运行 |
+| Gradle 模块 | 职责 |
+| --- | --- |
+| `:api` | 条件、目标、Handler、取消和注解变换的公共契约，不依赖 Loader 或 ASM |
+| `:core` | Mixin 0.8.7 接入、扩展排序、条件求值、目标分析和注解处理 |
+| `:loader:neoforge` | NeoForge 平台环境、模组入口、开发运行、GameTest 和发行包 |
+| `:loader:fabric`、`:loader:forge` | Gradle 平台模块定义 |
+| `:tests` | 条件求值和扩展排序的 JVM 测试 |
 
-依赖方向为 `Loader → Core → API`。公开 API 保持 Loader 独立，ASM 与 Mixin 的内部对象由 Core 管理。`com.modularmclib.mixinweaver.core.mixins` 是 Mixin 配置加载注入类的包。版本目录锁定 Mixin `0.8.7`，NeoForge 开发环境使用暴露相同 API 版本的发行包。未来更新先验证所用的 Mixin 接口和执行时机，再更新锁定版本。历史兼容层和 MixinExtras 在此设计范围之外。
+依赖方向为 `Loader → Core → API`。Loader 提供 Mod 列表、版本查询和可扫描的类路径，NeoForge 发行包收录 API 和 Core。Core 的 `mixin` 包负责与 Mixin 生命周期对接。`MixinInternals` 访问 Mixin 0.8.7 的可变 Mixin 集合、定义字节码和配置准备入口。公开的目标上下文只提供目标字节码，`IMixinInfo.getClassNode()` 返回副本，因此取消、调整和生成目标通过这些内部状态实现。Mixin 版本更新以发行环境对这些访问点和执行时机的验证为准。
 
-项目显示名为 **MixinWeaver**，Mod ID 为 `mixinweaver`，Java 命名空间为 `com.modularmclib.mixinweaver`。当前 NeoForge 模板目标为 Minecraft `1.21.1` 和 Java 21。NeoForge 平台模块将自身产物与 API、Core 一同打包，Minecraft、Mixin 和平台依赖由运行环境提供。公共打包脚本用平台子项目名作为 Loader 标识，按 `MixinWeaver-<loader>--<minecraft>-<version>.jar` 命名。
+## 生命周期
 
-## Mixin 生命周期
+| 阶段 | 执行内容 |
+| --- | --- |
+| `IMixinConfigPlugin.onLoad()` | MixinWeaver 自带的配置发现 `WeaverExtension`，安装 `IExtension` 和 Handler 选择器 |
+| `shouldApplyMixin()`、`acceptTargets()` | 求值条件，从配置移除不满足条件的目标，按需扫描类路径并注册动态目标副本 |
+| `IExtension.preApply()` | 对当前目标执行取消，应用程序化注解变换和声明式注入调整，暂时移除 MixinWeaver 的类级配置注解 |
+| `IExtension.postApply()` | 恢复当前目标使用的临时注入器注解及类级配置注解 |
 
-| 阶段 | 接入位置 | 职责 |
-| --- | --- | --- |
-| 初始化 | Loader 启动入口和 Core | 创建共享注册表，验证所需 Mixin 能力，注册转换扩展 |
-| 准备和选择 | `IMixinConfigPlugin` 及受验证的 Mixin 准备阶段接口 | 条件求值、取消 Mixin、解析和应用动态目标 |
-| 注入和转换 | `IExtension` 及受验证的注入准备阶段接口 | Handler 定位、注解变换、注入策略和字节码转换 |
-| 导出 | `IExtension.export()` | 输出转换诊断或导出结果 |
+`acceptTargets()` 处理各配置此时已准备好的 Mixin，包括使用自身配置插件的 Mixin。配置插件通过 `getMixins()` 在这一回调之后追加的条目处在自动条件筛选和动态目标扩展的扫描范围之外。
 
-`IMixinConfigPlugin.shouldApplyMixin()` 在选择阶段决定某个 Mixin 是否应用。`getMixins()` 和 `acceptTargets()` 提供配置和目标相关回调，动态目标扩张依赖的实际接入点待源码审查确认。`IExtension.checkActive()` 决定扩展启用状态，`preApply()` 和 `postApply()` 划定转换阶段。条件求值须在目标字节码进入转换前完成，Handler 和注解处理须确认其所需状态在对应时点可见。
+## 条件选择
 
-两个入口共享扩展注册表和执行上下文。Mixin 的 `IExtensionRegistry` 提供查询，扩展添加由具体的 `Extensions` 提供。Core 需验证注册时机、活动扩展列表与排序的对应关系，以及当前 Mixin 运行时是否满足所需能力。
+`@Conditional` 的 `require` 必须全部满足，`conflict` 中任一条件满足即拒绝应用。`@ConditionSpec("example_mod")` 检查 Mod 是否存在。指定 `version` 后还检查版本。NeoForge 接受比较式（如 `>=21.1 <22`）和 Maven 版本区间。`Kind.MIXIN` 检查指定 Mixin 的字节码是否存在及其自身条件是否满足。`Kind.CUSTOM` 引用 `WeaverExtension` 注册的条件。
 
-MixinWeaver 根据扩展声明的 `before` 和 `after` 约束确定执行顺序，并在初始化时诊断冲突。Core 将结果映射到 Mixin 可控的阶段和扩展顺序，并报告运行时无法满足的顺序约束。其他 Mod 的扩展顺序由 Mixin 管理。
+环境无法求值或条件出现循环时可能返回 `UNKNOWN`，按 `UnknownPolicy` 处理。默认 `DENY`，也可选择 `ALLOW` 或 `FAIL`。
 
-## 子系统
+## Handler、取消和调整
 
-| 子系统 | 能力来源 | 职责 |
-| --- | --- | --- |
-| Target | PolyMixin | 发现目标、分析继承与控制流、生成目标扩展结果 |
-| Handler | MixinSquared | 定位 Mixin Handler，表达跨 Mixin 引用 |
-| Condition | ConditionalMixin | 解析条件表达式并决定 Mixin 应用资格 |
-| Injection | PolyMixin、MixinSquared | 处理跨 Handler 注入和动态目标的注入约束 |
-| Transformation | MixinSquared | 以受控操作修改注解、方法及类节点 |
-| Extension | 三套实现的公共需求 | 扩展注册、执行排序、生命周期和诊断 |
+- `@TargetHandler` 写在注入器方法上。`@mixinweaver:handler` 根据另一 Mixin 的二进制类名和原始方法名匹配，可附加 JVM 方法描述符、Mixin 配置名和注入器前缀。
+- `@CancelMixins` 写在类上，按二进制类名取消同一目标类上的 Mixin。取消集合取自条件筛选与程序化取消后的声明者，再一次性移除匹配项。条件拒绝声明者时，其注解不会贡献取消规则。
+- `@AdjustInjection` 写在类上，指定收到调整的 Mixin、注入器处理方法和新的 `method` 选择器。处理方法必须唯一，重载时可附加 JVM 描述符。新选择器替换原有 `method` 和 `target`，由被调整 Mixin 的 Refmap 解析。匹配不到对应 Mixin 的目标类会跳过该声明。
 
-### 目标扩展
+动态目标副本沿用原 Mixin 的二进制类名做上述匹配，Refmap 也按原 Mixin 的键值重映射。程序化 `AnnotationTransformation` 对每个 Mixin 定义执行一次，其结果用于该定义的所有目标。声明式调整在这些变换之后执行，只作用于当前目标。多条调整按 Mixin 应用顺序处理，同一类的重复注解按声明顺序处理。同一注入器以最后一条为准。
 
-目标处理依次完成类发现、继承关系分析、方法控制流分析和候选选择，最后由 Core 将目标集合应用到 Mixin。目标基类方法的继承者与始终调用父类实现的覆盖者通常已受到基类注入影响，绕过父类实现的覆盖者可能需要单独注入。部分路径调用父类、部分路径绕过时，需要验证重复触发的边界。
+## 动态目标
 
-目标选择需支持子类、接口实现、方法覆盖和 `super` 调用，考虑 Refmap、运行时可见类路径、嵌套 JAR 和无法准确推导的选择器。注入策略负责生成目标所需的 `require` 调整。扫描结果通过 MixinWeaver 的目标模型传递，以保持公共 API 独立于 ClassGraph。
+`@DynamicTargets` 使用已声明的目标作为搜索起点。`SUBCLASSES` 选择发现的子类，`IMPLEMENTERS` 选择接口实现类，`OVERRIDING` 选择覆盖相关方法的类。默认 `BYPASSING` 选择可能绕过父实现的覆盖者。若某个方法仅在部分路径调用 `super`，这些路径可能先触发父类注入，再触发覆盖者上的注入。
 
-### Handler 与转换
+`packages` 限定候选目标的包名前缀，`provider` 引用已注册的 `DynamicTargetProvider`。`relaxRequirements` 只放宽生成副本的缺失注入点要求。NeoForge 从已发现的 Mod 文件根路径建立类索引，生成目标前检查目标是否已经加载。
 
-Handler 选择器可组合 Mixin 配置、Mixin 类名、方法名和描述符，定位结果携带稳定的 Handler 引用。审查时需验证同名与重载方法、多配置目标、类名映射及跨 Mixin 注入时的查找顺序。
+目标分析在声明式注入调整之前执行，因此生成目标的范围取决于原始选择器和策略。
 
-注解转换使用只读注解视图及明确的增加、修改、替换和删除操作。过滤条件可使用 Mixin、目标类、方法及注解描述符，诊断记录需说明操作和作用对象。共享 ASM 节点由转换阶段管理。
+## 程序化扩展
 
-### 条件选择
+通过 `META-INF/services/com.modularmclib.mixinweaver.api.extension.WeaverExtension` 注册提供者。`ExtensionRegistry` 使用 `before` 和 `after` 排序，排序规则对已发现的扩展 ID 生效，重复 ID 或循环依赖会在初始化时报错。
 
-条件可表达 Mod 存在、Mod 版本、Mixin 存在、自定义判断及布尔组合。求值结果包含 `TRUE`、`FALSE` 和 `UNKNOWN`，其中 `UNKNOWN` 表示信息尚未初始化或当前环境无法确定。
+`MixinCanceller` 按目标判断是否取消 Mixin。`AnnotationTransformation` 提供类或方法的只读注解视图，可通过返回新的列表添加、修改、替换和删除注解。自定义条件和目标提供者以注册 ID 从声明式注解引用。
 
-任一必需条件为 `FALSE` 或冲突条件为 `TRUE` 时拒绝应用。其余情况下按 `UnknownPolicy` 处理 `UNKNOWN`，默认使用 `DENY`，可显式选择 `ALLOW` 或 `FAIL`。必需条件全部满足、冲突条件全部排除时允许应用，空条件同样允许应用。
+## 验证范围
 
-## 源码审查清单
+JVM 测试验证条件求值和扩展排序。NeoForge GameTest 验证条件允许与拒绝、跨 Mixin 注入、注解作用域、动态副本匹配、方法覆盖、缺失注入点及接口实现。当前组合为 Minecraft 1.21.1、NeoForge 21.1.265、Mixin 0.8.7 和 Java 21。
 
-在冻结公共 API 前，先审查 PolyMixin 的 `polymixin-core`，再核对 MixinSquared 和 ConditionalMixin 的实际实现。
+## 上游参考
 
-### PolyMixin
+MixinWeaver 按现有模块和公开契约重新实现以下能力。
 
-- [ ] `DynamicTargets` 注解、默认 Provider 和自定义目标上下文
-- [ ] ClassGraph 扫描、运行时可见范围和嵌套 JAR 发现
-- [ ] Refmap 方法名解析和注入要求调整
-- [ ] 继承关系和接口实现分析
-- [ ] `super` 调用与控制流分析
-
-### MixinSquared
-
-- [ ] `TargetHandler` 定位规则
-- [ ] Annotation Adjuster 的执行时机
-- [ ] Mixin Canceller 的实现和应用时机
-- [ ] Extension 注册和排序机制
-
-### ConditionalMixin
-
-- [ ] `Restriction` 和 `Condition` 的完整语义
-- [ ] Mod ID、版本谓词和缓存
-- [ ] Mixin 存在性条件
-- [ ] 自定义 Condition Tester
-- [ ] Restriction 注解清理
-
-### 统一集成
-
-- [ ] `IExtension` 与 Config Plugin 的双入口协调
-- [ ] 扩展依赖排序和冲突处理
-- [ ] Loader 启动和平台发行机制
-
-## 参考源码
-
-- 动态目标发现和方法分析。 [PolyMixin](https://github.com/Dust-Pile/polymixin)
-- Handler 选择、注解调整和扩展排序。 [MixinSquared](https://github.com/Bawnorton/MixinSquared)
-- 条件匹配和版本谓词。 [ConditionalMixin](https://github.com/Fallen-Breath/conditional-mixin)
-- Mixin 生命周期接口。 [IExtension](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/transformer/ext/IExtension.java) · [IMixinConfigPlugin](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
+- MixinSquared 的 Handler 定位、取消、注解调整和排序。MIT，快照 `f9cf62f`。[参考提交](https://github.com/Bawnorton/MixinSquared/tree/f9cf62fc3f41c18ff28a72df1cbdd2a78ba4809c)
+- conditional-mixin 的条件选择和版本谓词。LGPL-3.0，快照 `be560b0`。[参考提交](https://github.com/Fallen-Breath/conditional-mixin/tree/be560b03ebe94295ad496e75928e25ac9d15f8f0)
+- MixinScope（PolyMixin）的动态目标、继承分析与 `super` 控制流。MIT，快照 `81af058`。[参考提交](https://github.com/Dust-Pile/polymixin/tree/81af05835f55c548581de30eb8400951f39066ec)
