@@ -10,11 +10,30 @@ public class TransformationTarget {
         return 5;
     }
 
+    public int originalValue() {
+        return 6;
+    }
+
     public int cancelledValue() {
         return 7;
     }
 
     public int unavailableValue() {
         return 8;
+    }
+
+    public static class Other {
+
+        public int adjustedValue() {
+            return 5;
+        }
+
+        public int originalValue() {
+            return 6;
+        }
+
+        public int cancelledValue() {
+            return 7;
+        }
     }
 }

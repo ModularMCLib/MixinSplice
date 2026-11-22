@@ -2,6 +2,8 @@ package com.modularmclib.mixinweaver.core.mixin;
 
 import com.modularmclib.mixinweaver.core.target.GeneratedMixin;
 
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
+import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.refmap.IReferenceMapper;
 
 import java.util.HashMap;
@@ -10,11 +12,28 @@ import java.util.Map;
 
 final class GeneratedRefmap implements IReferenceMapper {
 
+    private static final String CONFIG_KEY = "mixinweaver:generated_refmap";
+
     private final IReferenceMapper delegate;
     private final Map<String, String> origins = new HashMap<>();
 
-    GeneratedRefmap(IReferenceMapper delegate) {
+    private GeneratedRefmap(IReferenceMapper delegate) {
         this.delegate = delegate;
+    }
+
+    static GeneratedRefmap forConfig(IMixinConfig config, IReferenceMapper current) {
+        if (current instanceof GeneratedRefmap existing) {
+            return existing;
+        }
+        var refmap = new GeneratedRefmap(current);
+        config.decorate(CONFIG_KEY, refmap);
+        return refmap;
+    }
+
+    static String originalName(IMixinInfo mixin) {
+        GeneratedRefmap refmap = mixin.getConfig().getDecoration(CONFIG_KEY);
+        String name = mixin.getClassName();
+        return refmap == null ? name : refmap.origins.getOrDefault(name, name);
     }
 
     void add(List<GeneratedMixin> generated) {

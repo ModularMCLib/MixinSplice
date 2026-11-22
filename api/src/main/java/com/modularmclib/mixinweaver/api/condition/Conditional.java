@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** 在 Mixin 配置插件选择目标时评估的限制。 */
+/** 在 MixinWeaver 选择 Mixin 目标时评估的限制。 */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.CLASS)
 public @interface Conditional {

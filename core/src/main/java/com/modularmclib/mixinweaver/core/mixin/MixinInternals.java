@@ -99,8 +99,7 @@ final class MixinInternals {
         if (generated.isEmpty()) {
             return;
         }
-        IReferenceMapper original = referenceMapper(config);
-        GeneratedRefmap refmap = original instanceof GeneratedRefmap existing ? existing : new GeneratedRefmap(original);
+        GeneratedRefmap refmap = GeneratedRefmap.forConfig(config, referenceMapper(config));
         refmap.add(generated);
         write(Preparation.REFMAP, config, refmap);
 

@@ -1,6 +1,7 @@
 package com.modularmclib.mixinweaver.core.handler;
 
 import com.modularmclib.mixinweaver.api.handler.TargetHandler;
+import com.modularmclib.mixinweaver.core.mixin.MixinBytecode;
 
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.tree.MethodNode;
@@ -69,7 +70,7 @@ public final class HandlerSelector implements ITargetSelectorDynamic {
 
     @Override
     public ITargetSelector attach(ISelectorContext context) {
-        if (mixin.equals(context.getMixin().getClassName())) {
+        if (mixin.equals(MixinBytecode.originalName(context.getMixin().getMixin()))) {
             throw new InvalidSelectorException("处理方法选择器必须引用另一个 Mixin");
         }
         return this;
@@ -87,7 +88,7 @@ public final class HandlerSelector implements ITargetSelectorDynamic {
 
     @Override
     public <T> MatchResult match(ElementNode<T> node) {
-        if (!(node.getMethod() instanceof MethodNodeEx method) || !mixin.equals(method.getOwner().getClassName()) || Annotations.getVisible(method, MixinMerged.class) == null || (!config.isEmpty() && !config.equals(method.getOwner().getConfig().getName())) || (!prefix.isEmpty() && !method.name.startsWith(prefix + "$"))) {
+        if (!(node.getMethod() instanceof MethodNodeEx method) || !mixin.equals(MixinBytecode.originalName(method.getOwner())) || Annotations.getVisible(method, MixinMerged.class) == null || (!config.isEmpty() && !config.equals(method.getOwner().getConfig().getName())) || (!prefix.isEmpty() && !method.name.startsWith(prefix + "$"))) {
             return MatchResult.NONE;
         }
         if (member.getName().equals(method.getOriginalName()) && (member.getDesc() == null || member.getDesc().equals(method.desc))) {

@@ -79,10 +79,10 @@ public final class ConditionEvaluator {
     }
 
     private Condition parseRule(AnnotationNode spec) {
-        ConditionSpec.Kind kind = Annotations.getValue(spec, "kind", ConditionSpec.Kind.class, null);
+        ConditionSpec.Kind kind = Annotations.getValue(spec, "kind", ConditionSpec.Kind.class, ConditionSpec.Kind.MOD);
         String value = Annotations.getValue(spec, "value", "");
         String version = Annotations.getValue(spec, "version", "");
-        if (kind == null || value.isBlank() || (kind != ConditionSpec.Kind.MOD && !version.isEmpty())) {
+        if (value.isBlank() || (kind != ConditionSpec.Kind.MOD && !version.isEmpty())) {
             throw new IllegalArgumentException("无效的 MixinWeaver 条件 " + value);
         }
         return switch (kind) {

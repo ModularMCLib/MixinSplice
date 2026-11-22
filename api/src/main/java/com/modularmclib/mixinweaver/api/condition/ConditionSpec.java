@@ -9,10 +9,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface ConditionSpec {
 
-    Kind kind();
-
     /** Mod ID、Mixin 的二进制类名或已注册的自定义条件 ID。 */
     String value();
+
+    /** 默认按 Mod ID 求值。 */
+    Kind kind() default Kind.MOD;
 
     /** 平台版本谓词。空字符串表示只检查 Mod 是否存在。 */
     String version() default "";

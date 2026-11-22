@@ -26,6 +26,18 @@ public class ScopeTarget {
         public int value(boolean skipParent) {
             return 2;
         }
+
+        public int alternate() {
+            return 6;
+        }
+    }
+
+    public static class Cancelled extends ScopeTarget {
+
+        @Override
+        public int value(boolean skipParent) {
+            return 5;
+        }
     }
 
     public static class Partial extends ScopeTarget {
