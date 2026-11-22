@@ -8,8 +8,11 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.LoadingModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 
+import org.jspecify.annotations.Nullable;
+
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public final class ForgeEnvironment implements PlatformEnvironment {
 
@@ -24,15 +27,28 @@ public final class ForgeEnvironment implements PlatformEnvironment {
 
     @Override
     public ConditionResult mod(String modId, String versionPredicate) {
-        LoadingModList loading = LoadingModList.get();
-        if (loading != null) {
-            return check(loading.getMods(), modId, versionPredicate);
-        }
-        ModList loaded = ModList.get();
-        return loaded == null ? ConditionResult.UNKNOWN : check(loaded.getMods(), modId, versionPredicate);
+        List<? extends IModInfo> mods = discoveredMods();
+        return mods == null ? ConditionResult.UNKNOWN : ConditionResult.of(mods.stream().anyMatch(mod -> mod.getModId().equals(modId) && MavenModVersion.matches(mod.getVersion(), versionPredicate)));
     }
 
-    private static ConditionResult check(List<? extends IModInfo> mods, String modId, String predicate) {
-        return ConditionResult.of(mods.stream().anyMatch(mod -> mod.getModId().equals(modId) && MavenModVersion.matches(mod.getVersion(), predicate)));
+    @Override
+    public Optional<String> modVersion(String modId) {
+        List<? extends IModInfo> mods = discoveredMods();
+        return mods == null ? Optional.empty() : mods.stream().filter(mod -> mod.getModId().equals(modId))
+                .map(mod -> mod.getVersion().toString()).findFirst();
+    }
+
+    @Override
+    public boolean matchesVersion(String version, String predicate) {
+        return MavenModVersion.matches(version, predicate);
+    }
+
+    private static @Nullable List<? extends IModInfo> discoveredMods() {
+        LoadingModList loading = LoadingModList.get();
+        if (loading != null) {
+            return loading.getMods();
+        }
+        ModList loaded = ModList.get();
+        return loaded == null ? null : loaded.getMods();
     }
 }

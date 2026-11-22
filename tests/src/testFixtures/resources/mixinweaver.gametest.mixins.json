@@ -9,6 +9,7 @@
 		"HandlerMixin",
 		"CancelledMixin",
 		"UnavailableMixin",
+		"OptionalTargetMixin",
 		"ScopeMixin",
 		"ScopeCompatibilityMixin",
 		"ScopeCancellationMixin",

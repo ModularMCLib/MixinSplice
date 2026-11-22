@@ -1,6 +1,5 @@
 package com.modularmclib.mixinweaver.core.mixin;
 
-import com.modularmclib.mixinweaver.api.condition.ConditionResult;
 import com.modularmclib.mixinweaver.core.condition.ConditionEvaluator;
 import com.modularmclib.mixinweaver.core.extension.ExtensionRegistry;
 import com.modularmclib.mixinweaver.core.platform.PlatformEnvironment;
@@ -22,14 +21,22 @@ public class MixinWeaverConfigPlugin implements IMixinConfigPlugin {
         private static final ExtensionRegistry EXTENSIONS = ExtensionRegistry.discover();
         private static final PlatformEnvironment PLATFORM = ServiceLoader
                 .load(PlatformEnvironment.class, PlatformEnvironment.class.getClassLoader())
-                .findFirst().orElse((modId, version) -> ConditionResult.UNKNOWN);
+                .findFirst().orElseThrow(() -> new IllegalStateException("未找到 MixinWeaver 平台实现"));
         private static final ConditionEvaluator CONDITIONS = new ConditionEvaluator(PLATFORM, EXTENSIONS.conditions(), MixinBytecode::metadata);
         private static final MixinPreparation PREPARATION = new MixinPreparation(CONDITIONS, PLATFORM, EXTENSIONS.targetProviders());
     }
 
     @Override
     public void onLoad(String mixinPackage) {
-        MixinWeaverExtension.install(Runtime.EXTENSIONS);
+        MixinWeaverExtension.install(Runtime.EXTENSIONS, Runtime.CONDITIONS);
+    }
+
+    static ConditionEvaluator conditions() {
+        return Runtime.CONDITIONS;
+    }
+
+    static PlatformEnvironment platform() {
+        return Runtime.PLATFORM;
     }
 
     @Override

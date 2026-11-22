@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     compileOnly project(':core')
+    compileOnly(libs.jspecify)
     implementation(libs.neoForge)
     testCompileOnly project(':api')
     testCompileOnly(libs.asm.tree)

@@ -1,5 +1,6 @@
 package com.modularmclib.mixinweaver.gametest;
 
+import com.modularmclib.mixinweaver.api.condition.ConditionQueries;
 import com.modularmclib.mixinweaver.gametest.target.PluginTarget;
 import com.modularmclib.mixinweaver.gametest.target.ScopeTarget;
 import com.modularmclib.mixinweaver.gametest.target.TransformationTarget;
@@ -15,6 +16,14 @@ public final class RuntimeAssertions {
         assertTrue(target.originalValue() == 6, "替换选择器后应跳过原注入目标");
         assertTrue(target.cancelledValue() == 7, "已取消的 Mixin 不应运行");
         assertTrue(target.unavailableValue() == 8, "缺少依赖时条件 Mixin 不应运行");
+        assertTrue(target.optionalValue() == 17, "类条件应保留存在的目标");
+        var queries = ConditionQueries.get();
+        String version = queries.modVersion("minecraft").orElseThrow();
+        assertTrue(queries.matchesVersion(version, "1.21.x"), "应能使用当前平台的版本谓词查询");
+        String mixin = "com.modularmclib.mixinweaver.gametest.mixins.OptionalTargetMixin";
+        assertTrue(queries.check(TransformationTarget.class.getName(), mixin).allowed(), "主动查询应允许存在的目标");
+        assertTrue(!queries.shouldApply("example.missing.ConditionalTarget", mixin,
+                reason -> assertTrue(reason.contains("ExistingTargetCondition"), "应报告拒绝目标的条件")), "主动查询应拒绝缺失的目标");
         var other = new TransformationTarget.Other();
         assertTrue(other.adjustedValue() == 5 && other.originalValue() == 99, "其他目标应保留原注入选择器");
         assertTrue(other.cancelledValue() == 100, "其他目标应继续应用同一个 Mixin");

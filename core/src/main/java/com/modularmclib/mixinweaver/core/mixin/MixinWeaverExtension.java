@@ -3,6 +3,7 @@ package com.modularmclib.mixinweaver.core.mixin;
 import com.modularmclib.mixinweaver.api.mixin.MixinCanceller;
 import com.modularmclib.mixinweaver.api.mixin.MixinSubject;
 import com.modularmclib.mixinweaver.api.transformation.AnnotationTransformation;
+import com.modularmclib.mixinweaver.core.condition.ConditionEvaluator;
 import com.modularmclib.mixinweaver.core.extension.ExtensionRegistry;
 import com.modularmclib.mixinweaver.core.handler.HandlerSelector;
 import com.modularmclib.mixinweaver.core.transformation.AnnotationTransformer;
@@ -33,24 +34,26 @@ final class MixinWeaverExtension implements IExtension {
     private final List<MixinCanceller> cancellers;
     private final List<AnnotationTransformation> transformations;
     private final AnnotationTransformer transformer;
+    private final ConditionalTargets conditionalTargets;
     private final ILogger logger = MixinService.getService().getLogger("mixinweaver");
     private final Set<IMixinInfo> adjusted = Collections.newSetFromMap(new IdentityHashMap<>());
     private final List<Runnable> scopedChanges = new ArrayList<>();
 
-    private MixinWeaverExtension(ExtensionRegistry registry) {
+    private MixinWeaverExtension(ExtensionRegistry registry, ConditionEvaluator evaluator) {
         cancellers = registry.cancellers();
         transformations = registry.transformations();
         transformer = new AnnotationTransformer(transformations);
+        conditionalTargets = new ConditionalTargets(evaluator);
     }
 
-    static synchronized void install(ExtensionRegistry registry) {
+    static synchronized void install(ExtensionRegistry registry, ConditionEvaluator evaluator) {
         if (installed) {
             return;
         }
         Extensions extensions = extensions();
         MixinInternals.verifyApplicationAccess();
         TargetSelector.register(HandlerSelector.class, "mixinweaver");
-        extensions.add(new MixinWeaverExtension(registry));
+        extensions.add(new MixinWeaverExtension(registry, evaluator));
         installed = true;
     }
 
@@ -64,6 +67,7 @@ final class MixinWeaverExtension implements IExtension {
 
     @Override
     public boolean checkActive(MixinEnvironment environment) {
+        MixinInternals.filterTargets(conditionalTargets::filter);
         return true;
     }
 

@@ -13,6 +13,10 @@ public final class MavenModVersion {
 
     private MavenModVersion() {}
 
+    public static boolean matches(String actual, String expression) {
+        return matches(new DefaultArtifactVersion(actual), expression);
+    }
+
     public static boolean matches(ArtifactVersion actual, String expression) {
         String predicate = expression.strip();
         if (predicate.isEmpty() || predicate.equals("*")) {

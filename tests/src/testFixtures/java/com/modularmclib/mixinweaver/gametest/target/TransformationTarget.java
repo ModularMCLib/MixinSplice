@@ -2,6 +2,10 @@ package com.modularmclib.mixinweaver.gametest.target;
 
 public class TransformationTarget {
 
+    public int optionalValue() {
+        return 1;
+    }
+
     public int handlerValue() {
         return 2;
     }

@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -36,9 +37,24 @@ final class GeneratedBytecodeService {
                     }
                     return invoke(provider, method, args);
                 }));
+        return withProvider(base, decorated);
+    }
+
+    static IMixinService filter(IMixinService base, BiFunction<String, ClassNode, ClassNode> filter) {
+        IClassBytecodeProvider delegate = base.getBytecodeProvider();
+        IClassBytecodeProvider provider = IClassBytecodeProvider.class.cast(Proxy.newProxyInstance(
+                IClassBytecodeProvider.class.getClassLoader(), new Class<?>[] { IClassBytecodeProvider.class },
+                (proxy, method, args) -> {
+                    Object result = invoke(delegate, method, args);
+                    return result instanceof ClassNode node ? filter.apply((String) args[0], node) : result;
+                }));
+        return withProvider(base, provider);
+    }
+
+    private static IMixinService withProvider(IMixinService base, IClassBytecodeProvider provider) {
         return IMixinService.class.cast(Proxy.newProxyInstance(
                 IMixinService.class.getClassLoader(), new Class<?>[] { IMixinService.class },
-                (proxy, method, args) -> method.getName().equals("getBytecodeProvider") ? decorated : invoke(base, method, args)));
+                (proxy, method, args) -> method.getName().equals("getBytecodeProvider") ? provider : invoke(base, method, args)));
     }
 
     private static Object invoke(Object target, Method method, Object[] arguments) throws Throwable {

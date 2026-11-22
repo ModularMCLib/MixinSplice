@@ -24,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /**
@@ -100,12 +101,27 @@ final class MixinInternals {
         return (IReferenceMapper) read(Preparation.REFMAP, config);
     }
 
-    // getMixins 在 acceptTargets 之后执行，监听器观察该阶段实际准备的条目。
-    static void listenForPluginMixins(Consumer<IMixinInfo> onPrepare) {
+    // checkActive 位于配置选择与目标解析之间。插件回调无法覆盖未注册插件的配置和 getMixins。
+    static void filterTargets(BiFunction<IMixinConfig, ClassNode, ClassNode> filter) {
+        for (IMixinConfig config : pendingConfigs()) {
+            String key = "mixinweaver:target_filter";
+            if (!config.hasDecoration(key)) {
+                IMixinService base = (IMixinService) read(Preparation.SERVICE, config);
+                write(Preparation.SERVICE, config, GeneratedBytecodeService.filter(base, (name, node) -> filter.apply(config, node)));
+                config.decorate(key, Boolean.TRUE);
+            }
+        }
+    }
+
+    private static List<IMixinConfig> pendingConfigs() {
         Object transformer = MixinEnvironment.getDefaultEnvironment().getActiveTransformer();
         Object processor = read(PluginMixins.TRANSFORMER_PROCESSOR, transformer);
-        for (Object entry : (List<?>) read(PluginMixins.PENDING_CONFIGS, processor)) {
-            IMixinConfig config = IMixinConfig.class.cast(entry);
+        return ((List<?>) read(PluginMixins.PENDING_CONFIGS, processor)).stream().map(IMixinConfig.class::cast).toList();
+    }
+
+    // getMixins 在 acceptTargets 之后执行，监听器观察该阶段实际准备的条目。
+    static void listenForPluginMixins(Consumer<IMixinInfo> onPrepare) {
+        for (IMixinConfig config : pendingConfigs()) {
             String key = "mixinweaver:plugin_mixin_listener";
             var plugin = config.getPlugin();
             if (plugin == null || plugin.getClass() == MixinWeaverConfigPlugin.class || config.hasDecoration(key)) {

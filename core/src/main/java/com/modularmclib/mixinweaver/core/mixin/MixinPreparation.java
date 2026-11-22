@@ -1,6 +1,5 @@
 package com.modularmclib.mixinweaver.core.mixin;
 
-import com.modularmclib.mixinweaver.api.condition.Conditional;
 import com.modularmclib.mixinweaver.api.mixin.MixinSubject;
 import com.modularmclib.mixinweaver.api.target.DynamicTargetProvider;
 import com.modularmclib.mixinweaver.api.target.DynamicTargets;
@@ -68,14 +67,6 @@ final class MixinPreparation {
             return List.of();
         }
         ClassNode annotations = mixin.getClassNode(ClassReader.SKIP_CODE);
-        if (Annotations.getInvisible(annotations, Conditional.class) != null) {
-            for (String name : mixin.getTargetClasses()) {
-                String target = name.replace('/', '.');
-                if (!conditions.shouldApply(target, mixin.getClassName())) {
-                    MixinInternals.removeTarget(mixin, target);
-                }
-            }
-        }
         AnnotationNode annotation = Annotations.getInvisible(annotations, DynamicTargets.class);
         if (annotation == null) {
             return List.of();

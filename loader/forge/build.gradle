@@ -10,6 +10,7 @@ dependencies {
     compileOnly(libs.forge.core)
     compileOnly(libs.forge.securemodules)
     compileOnly(libs.maven.artifact)
+    compileOnly(libs.jspecify)
     testCompileOnly(libs.mixin)
     testCompileOnly(libs.asm.tree)
 }
