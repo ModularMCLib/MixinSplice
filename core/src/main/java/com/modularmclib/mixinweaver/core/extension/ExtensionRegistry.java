@@ -2,6 +2,8 @@ package com.modularmclib.mixinweaver.core.extension;
 
 import com.modularmclib.mixinweaver.api.condition.Condition;
 import com.modularmclib.mixinweaver.api.extension.WeaverExtension;
+import com.modularmclib.mixinweaver.api.mixin.MixinCanceller;
+import com.modularmclib.mixinweaver.api.transformation.AnnotationTransformation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +20,8 @@ public final class ExtensionRegistry {
 
     private final List<WeaverExtension> ordered;
     private final Map<String, Condition> conditions;
+    private final List<MixinCanceller> cancellers;
+    private final List<AnnotationTransformation> transformations;
 
     public ExtensionRegistry(Collection<WeaverExtension> extensions) {
         ordered = order(extensions);
@@ -30,6 +34,8 @@ public final class ExtensionRegistry {
             });
         }
         conditions = Map.copyOf(indexed);
+        cancellers = ordered.stream().flatMap(extension -> extension.cancellers().stream()).toList();
+        transformations = ordered.stream().flatMap(extension -> extension.transformations().stream()).toList();
     }
 
     public static ExtensionRegistry discover() {
@@ -43,6 +49,14 @@ public final class ExtensionRegistry {
 
     public Map<String, Condition> conditions() {
         return conditions;
+    }
+
+    public List<MixinCanceller> cancellers() {
+        return cancellers;
+    }
+
+    public List<AnnotationTransformation> transformations() {
+        return transformations;
     }
 
     private static List<WeaverExtension> order(Collection<WeaverExtension> extensions) {

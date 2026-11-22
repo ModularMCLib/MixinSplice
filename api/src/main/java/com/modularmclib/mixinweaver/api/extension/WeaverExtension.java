@@ -1,7 +1,10 @@
 package com.modularmclib.mixinweaver.api.extension;
 
 import com.modularmclib.mixinweaver.api.condition.Condition;
+import com.modularmclib.mixinweaver.api.mixin.MixinCanceller;
+import com.modularmclib.mixinweaver.api.transformation.AnnotationTransformation;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,5 +30,15 @@ public interface WeaverExtension {
     /** 注册自定义选择条件。返回非空映射，键是全局唯一的条件 ID。 */
     default Map<String, Condition> conditions() {
         return Map.of();
+    }
+
+    /** 返回按声明顺序执行的 Mixin 取消规则。列表及元素均需非空。 */
+    default List<MixinCanceller> cancellers() {
+        return List.of();
+    }
+
+    /** 返回按声明顺序执行的注解调整规则。列表及元素均需非空。 */
+    default List<AnnotationTransformation> transformations() {
+        return List.of();
     }
 }

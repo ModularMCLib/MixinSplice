@@ -13,7 +13,8 @@ public final class MixinBytecode {
 
     public static @Nullable ClassNode metadata(String className) {
         try {
-            return MixinService.getService().getBytecodeProvider().getClassNode(className, false,
+            // ModLauncher 的字节码提供器要求使用正常的转换读取路径。
+            return MixinService.getService().getBytecodeProvider().getClassNode(className, true,
                     ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
         } catch (ClassNotFoundException exception) {
             return null;

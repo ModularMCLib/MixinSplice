@@ -39,7 +39,9 @@ public class MixinWeaverConfigPlugin implements IMixinConfigPlugin {
     }
 
     @Override
-    public void onLoad(String mixinPackage) {}
+    public void onLoad(String mixinPackage) {
+        MixinWeaverExtension.install(Runtime.EXTENSIONS);
+    }
 
     @Override
     public @Nullable String getRefMapperConfig() {

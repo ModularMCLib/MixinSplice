@@ -67,6 +67,7 @@ neoForge {
             type = "gameTestServer"
             sourceSet = sourceSets.test
             ideName = "Game Tests"
+            programArguments.addAll('--mixin.config', 'mixinweaver.gametest.mixins.json')
 
             gameDirectory.set(file('run/gametest/server'))
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)
@@ -77,6 +78,7 @@ neoForge {
             client()
             sourceSet = sourceSets.test
             ideName = "Game Tests (Client)"
+            programArguments.addAll('--mixin.config', 'mixinweaver.gametest.mixins.json')
 
             gameDirectory.set(file('run/gametest/client'))
             systemProperty('neoforge.enabledGameTestNamespaces', project.mod_id)

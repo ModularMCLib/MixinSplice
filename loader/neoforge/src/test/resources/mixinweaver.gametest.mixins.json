@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"minVersion": "0.8.7",
+	"package": "com.modularmclib.mixinweaver.gametest.mixins",
+	"plugin": "com.modularmclib.mixinweaver.core.mixin.MixinWeaverConfigPlugin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"OriginMixin",
+		"HandlerMixin",
+		"CancelledMixin",
+		"UnavailableMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
