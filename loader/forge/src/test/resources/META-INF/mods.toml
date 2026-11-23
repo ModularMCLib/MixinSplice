@@ -3,12 +3,12 @@ loaderVersion = "[51,)"
 license = "GNU AGPL 3.0"
 
 [[mods]]
-modId = "mixinweaver_runtime_test"
+modId = "mixinsplice_runtime_test"
 version = "1"
-displayName = "MixinWeaver Runtime Test"
+displayName = "MixinSplice Runtime Test"
 
-[[dependencies.mixinweaver_runtime_test]]
-modId = "mixinweaver"
+[[dependencies.mixinsplice_runtime_test]]
+modId = "mixinsplice"
 mandatory = true
 versionRange = "[0,)"
 ordering = "AFTER"

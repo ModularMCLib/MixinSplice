@@ -8,7 +8,7 @@ def testMod = tasks.register('testModJar', Jar) {
     from sourceSets.test.output
     dependsOn fixtures
     from { zipTree(fixtures.get().archiveFile.get().asFile) }
-    manifest.attributes('MixinConfigs': 'mixinweaver.gametest.mixins.json,mixinweaver.plugin.gametest.mixins.json')
+    manifest.attributes('MixinConfigs': 'mixinsplice.gametest.mixins.json,mixinsplice.plugin.gametest.mixins.json')
     duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 

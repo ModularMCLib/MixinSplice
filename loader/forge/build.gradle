@@ -45,5 +45,5 @@ apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
 
 tasks.named('testModJar', Jar) {
-    manifest.attributes('MixinConfigs': 'mixinweaver.gametest.mixins.json,mixinweaver.plugin.gametest.mixins.json,mixinweaver.forge.gametest.mixins.json')
+    manifest.attributes('MixinConfigs': 'mixinsplice.gametest.mixins.json,mixinsplice.plugin.gametest.mixins.json,mixinsplice.forge.gametest.mixins.json')
 }
