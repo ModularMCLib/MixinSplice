@@ -1,3 +1,6 @@
+// Fabric 和 Forge 通过独立测试模组运行用例，关闭 NeoGradle 按任务名自动创建的运行配置。
+subsystems.conventions.runs.shouldDefaultRunsBeCreated.set(false)
+
 dependencies {
     testImplementation(testFixtures(project(':tests')))
 }
