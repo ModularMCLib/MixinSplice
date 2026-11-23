@@ -9,14 +9,15 @@ MixinSplice 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 | `:api` | 条件、目标、Handler、取消和注解变换的公共契约，共用 Mixin 的注入注解类型 |
 | `:core` | Mixin 0.8.7 接入、扩展排序、条件求值、目标分析和注解处理 |
 | `:loader:neoforge` | NeoForge 平台环境、NeoGradle 开发运行、GameTest 和发行包 |
-| `:loader:fabric`、`:loader:forge` | 平台环境、发行包和服务端测试模组 |
+| `:loader:fabric` | Fabric 平台环境、Loom 发行包和生产服务端测试 |
+| `:loader:forge` | Forge 平台环境、JarJar 发行包和 ForgeGradle GameTest |
 | `:tests` | 条件求值和扩展排序的 JVM 测试，以及三平台共用的 Mixin 用例 |
 
 依赖方向为 `Loader → Core → API`。各平台提供 Mod 列表、版本查询和可扫描的类路径。Core 的 `MixinInternals` 访问 Mixin 0.8.7 的可变 Mixin 集合、定义字节码和配置准备入口。公开的目标上下文只提供目标字节码，`IMixinInfo.getClassNode()` 返回副本，因此取消、调整和生成目标通过这些内部状态实现。
 
 ## Jar-in-Jar 与 Mixin 配置
 
-`:core` 将 API、实现和 javac 插件打进 `mixinsplice-common`。三平台在同一个 `dependencies` 块中声明 `jarJar project(path: ':core', configuration: 'commonElements')`。NeoGradle 将共享库原样放进平台包的 `META-INF/jarjar/`，并生成 JarJar 元数据。Fabric 读取 `fabric.mod.json` 的 `jars`，共享库的 Fabric ID 为 `mixinsplice_common`。Forge 和 NeoForge 通过 JarJar 元数据找到共享库，由其 Manifest 中的 `FMLModType: GAMELIBRARY` 将它载入游戏层。
+`:core` 将 API、实现和 javac 插件打进 `mixinsplice-common`。三平台都引用 `:core` 的 `commonElements`。Fabric 通过 Loom 的 `include` 把共享库嵌入 `META-INF/jars/`，Loom 生成 `fabric.mod.json` 的 `jars` 声明。共享库的 Fabric ID 为 `mixinsplice_common`。Forge 通过 Forge JarJar 插件打包，NeoForge 通过 NeoGradle 打包，两者用 `jarJar` 依赖把共享库放进 `META-INF/jarjar/` 并生成元数据。共享库的 Manifest 声明 `FMLModType: GAMELIBRARY`，供 Forge 和 NeoForge 将它载入游戏层。
 
 初始化配置 `mixinsplice.mixins.json` 随平台包分发。Fabric 在 `fabric.mod.json` 中声明 `mixins`，Forge 在 Manifest 中声明 `MixinConfigs`，NeoForge 在 `neoforge.mods.toml` 中声明 `[[mixins]]`。Forge 和 NeoForge 使用 `lowcodefml` 注册平台模组。共享库提供配置中的插件类 `MixinSpliceConfigPlugin`。配置的 `package` 为 `core.mixins`，让 Mixin 将该包前缀留给 Mixin 类，插件及运行时类位于 `core.mixin`。
 
@@ -68,7 +69,11 @@ MixinSplice 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 
 ## 验证范围
 
-JVM 测试验证条件求值、扩展排序和副本字节码。三平台运行用例覆盖可选目标、跨 Mixin 注入、注解作用域、动态目标、接口及插件追加的 Mixin。NeoForge 还验证真实 MixinExtras 注入器。运行 NeoForge 用例可执行 `:loader:neoforge:runGameTestServer`。Fabric 和 Forge 可通过 `:loader:fabric:testModJar`、`:loader:forge:testModJar` 构建独立测试模组。将测试 JAR 与对应主 JAR 放进测试服务端的 `mods/` 后，Fabric 使用 `--initSettings`，Forge 使用 `--help`。断言通过后输出 `MixinSplice runtime tests passed`。
+JVM 测试验证条件求值、扩展排序和副本字节码。三平台运行用例覆盖可选目标、跨 Mixin 注入、注解作用域、动态目标、接口及插件追加的 Mixin。NeoForge 还验证真实 MixinExtras 注入器，可执行 `:loader:neoforge:runGameTestServer` 运行。
+
+Fabric 的 `:loader:fabric:runGameTestServer` 使用 Loom 的生产服务端任务加载发行包和测试模组，在 `--initSettings` 阶段执行断言。Forge 的 `:loader:forge:runTestGameTestServer` 使用 ForgeGradle 的 `gameTestServer` 配置加载 JarJar 发行包与测试模组，由测试模组的 `@GameTest` 调用共享断言。Forge 和 NeoForge 从测试夹具读取同一个 `mixinsplice:empty` 结构模板。
+
+PR 的 CI 依次启动 Fabric 服务端、Forge 服务端和 NeoForge GameTest 服务端，最后执行 `:tests:test`。四项结果共同决定 PR 的测试标签和作业状态。
 
 ## 上游参考
 

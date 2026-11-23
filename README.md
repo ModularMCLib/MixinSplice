@@ -47,7 +47,7 @@ dependencies {
 | Forge | `mixinsplice-forge` | `dependencies` 中的 `jarJar` |
 | NeoForge | `mixinsplice-neoforge` | `dependencies` 中的 `jarJar` |
 
-使用 ForgeGradle 6 的项目需调用 `jarJar.enable()`，并分发 `jarJar` 任务生成的 JAR。
+使用 ForgeGradle 7 的项目通过 `net.minecraftforge.jarjar` 插件和 `jarJar.register()` 提供打包配置。ForgeGradle 6 项目需调用 `jarJar.enable()`。分发时使用 `jarJar` 任务生成的 JAR。
 
 注解的作用域、执行顺序和限制见[架构文档](docs/architecture.md)。
 
@@ -63,12 +63,15 @@ dependencies {
 
 ### 构建
 
-用 Java 21 运行 Gradle Wrapper。通过环境变量 `GRADLE_USER_HOME` 指定 Gradle 缓存目录。三平台的主 JAR 由 NeoGradle 的 `jarJar` 任务生成。
+用 Java 21 运行 Gradle Wrapper。通过环境变量 `GRADLE_USER_HOME` 指定 Gradle 缓存目录。Fabric 用 Loom 的 `remapJar` 打包，Forge 用 Forge JarJar，NeoForge 用 NeoGradle 的 `jarJar`。
 
 ```powershell
 .\gradlew.bat build
 .\gradlew.bat :loader:fabric:slimJar :loader:forge:slimJar :loader:neoforge:slimJar
+.\gradlew.bat :loader:fabric:runGameTestServer
+.\gradlew.bat :loader:forge:runTestGameTestServer
 .\gradlew.bat :loader:neoforge:runGameTestServer
+.\gradlew.bat :tests:test --rerun
 .\gradlew.bat publishToMavenLocal
 ```
 
@@ -119,7 +122,7 @@ To embed MixinSplice in your mod, add the platform artifact to your build's pack
 | Forge | `mixinsplice-forge` | `jarJar` in `dependencies` |
 | NeoForge | `mixinsplice-neoforge` | `jarJar` in `dependencies` |
 
-With ForgeGradle 6, call `jarJar.enable()` and distribute the JAR from the `jarJar` task.
+With ForgeGradle 7, apply `net.minecraftforge.jarjar` and call `jarJar.register()`. With ForgeGradle 6, call `jarJar.enable()`. Distribute the JAR produced by the `jarJar` task.
 
 For annotation scope, execution order, and limitations, see the [architecture document](docs/architecture.md).
 
@@ -135,12 +138,15 @@ All three distributions target Java 21 and Mixin 0.8.7. NeoForge 21.0 for Minecr
 
 ### Build
 
-Use Java 21 to run the Gradle Wrapper. Set `GRADLE_USER_HOME` to select the Gradle cache directory. NeoGradle's `jarJar` task builds the main JAR on all three platforms.
+Use Java 21 to run the Gradle Wrapper. Set `GRADLE_USER_HOME` to select the Gradle cache directory. Fabric builds with Loom's `remapJar`, Forge with Forge JarJar, and NeoForge with NeoGradle's `jarJar` task.
 
 ```powershell
 .\gradlew.bat build
 .\gradlew.bat :loader:fabric:slimJar :loader:forge:slimJar :loader:neoforge:slimJar
+.\gradlew.bat :loader:fabric:runGameTestServer
+.\gradlew.bat :loader:forge:runTestGameTestServer
 .\gradlew.bat :loader:neoforge:runGameTestServer
+.\gradlew.bat :tests:test --rerun
 .\gradlew.bat publishToMavenLocal
 ```
 
