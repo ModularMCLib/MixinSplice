@@ -41,7 +41,9 @@ jobs:
         run: chmod +x gradlew
       - name: Get Version
         id: ver
-        run: echo "version=$(./gradlew -q printVersion)" >> $GITHUB_OUTPUT
+        run: |
+          version=$(./gradlew -q --configure-on-demand :printVersion)
+          printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
       - name: Build
         run: ./gradlew assemble
       - name: Upload Build Artifacts
