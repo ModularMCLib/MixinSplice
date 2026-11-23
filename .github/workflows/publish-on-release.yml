@@ -17,8 +17,7 @@ jobs:
       - name: Get Config
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
+          ref: ${{ github.ref_name }}
           sparse-checkout: '.github/json'
       - name: Generate changelog
         id: changelog
@@ -39,5 +38,6 @@ jobs:
     with:
       simulate: ${{ startsWith(github.event.release.name, 'simulate') || github.repository_owner != 'ExtremelyFrozen' }}
       tag-name: ${{ github.ref_name }}
+      branch: main
       release-body: ${{ github.event.release.body }}
       changelog-body: ${{ needs.meta.outputs.CHANGELOG }}

@@ -46,7 +46,7 @@ minecraft {
 ext.platformMetadata = [
         loader_version_range    : '[51,)',
         platform_version_range  : "[${libs.versions.forgeLoaderMinimum.get()},62)",
-        minecraft_version_range : "[${libs.versions.minecraftMinimum.get()},)"
+        minecraft_version_range : '[1.21,)'
 ]
 
 apply from: "$rootDir/gradle/scripts/resources.gradle"

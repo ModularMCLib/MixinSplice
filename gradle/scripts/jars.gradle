@@ -79,7 +79,7 @@ def sourcesArchive = tasks.named('sourcesJar', Jar) {
 def publishedSources = fabric ? tasks.named('remapSourcesJar', Jar) : sourcesArchive
 
 base {
-    // 平台子项目名用作发行文件名中的 Loader 标识。
+    // 平台子项目名同时用作发行文件名中的 Loader 标识。
     archivesName = "${rootProject.name}-${project.name}"
 }
 

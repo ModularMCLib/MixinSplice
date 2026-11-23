@@ -10,6 +10,10 @@ on:
         description: 'Tag to build from and upload to'
         required: true
         type: string
+      branch:
+        description: 'Branch to build from and update after release'
+        required: true
+        type: string
       release-body:
         description: 'Body for published release notes'
         required: false
@@ -32,11 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: refs/tags/${{ inputs.tag-name }}
+          ref: ${{ inputs.branch }}
       - name: Setup Build
         uses: ./.github/actions/build_setup
         with:
-          ref: refs/tags/${{ inputs.tag-name }}
+          ref: ${{ inputs.branch }}
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Get Version
@@ -76,15 +80,11 @@ jobs:
           files: ./*.jar
           fail_on_unmatched_files: true
 
-  # 发布模板按加载器选取制品，游戏版本从 JAR 的元数据读取。
   #  publish-modrinth:
   #    name: Publish to Modrinth
   #    needs: build
   #    if: ${{ !inputs.simulate }}
   #    runs-on: ubuntu-latest
-  #    strategy:
-  #      matrix:
-  #        loader: [fabric, forge, neoforge]
   #    permissions:
   #      contents: write
   #    steps:
@@ -93,16 +93,18 @@ jobs:
   #        with:
   #          name: build-artifacts-${{ inputs.tag-name }}
   #      - name: Publish Mod
+  #        env:
+  #          LOADER: neoforge
   #        uses: Kir-Antipov/mc-publish@v3.3.0
   #        with:
-  #          modrinth-id: ${{ vars.MODRINTH_PROJECT_ID }}
+  #          modrinth-id: aADDBrNC
   #          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-  #          files: ./mixinsplice-${{ matrix.loader }}-${{ needs.build.outputs.ver }}.jar
-  #          name: 'MixinSplice ${{ needs.build.outputs.ver }} (${{ matrix.loader }})'
-  #          version: '${{ needs.build.outputs.ver }}-${{ matrix.loader }}'
+  #          files: ./mixinsplice-${{ env.LOADER }}-${{ needs.build.outputs.ver }}.jar
+  #          name: 'MixinSplice ${{ needs.build.outputs.ver }}'
+  #          version: ${{ needs.build.outputs.ver }}
   #          version-type: beta
   #          changelog: ${{ inputs.release-body }}
-  #          loaders: ${{ matrix.loader }}
+  #          loaders: ${{ env.LOADER }}
   #          java: '21'
   #          fail-mode: fail
   #
@@ -111,9 +113,6 @@ jobs:
   #    needs: build
   #    if: ${{ !inputs.simulate }}
   #    runs-on: ubuntu-latest
-  #    strategy:
-  #      matrix:
-  #        loader: [fabric, forge, neoforge]
   #    permissions:
   #      contents: write
   #    steps:
@@ -122,16 +121,18 @@ jobs:
   #        with:
   #          name: build-artifacts-${{ inputs.tag-name }}
   #      - name: Publish Mod
+  #        env:
+  #          LOADER: neoforge
   #        uses: Kir-Antipov/mc-publish@v3.3.0
   #        with:
-  #          curseforge-id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+  #          curseforge-id: 1397216
   #          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-  #          files: ./mixinsplice-${{ matrix.loader }}-${{ needs.build.outputs.ver }}.jar
-  #          name: 'MixinSplice ${{ needs.build.outputs.ver }} (${{ matrix.loader }})'
-  #          version: '${{ needs.build.outputs.ver }}-${{ matrix.loader }}'
+  #          files: ./mixinsplice-${{ env.LOADER }}-${{ needs.build.outputs.ver }}.jar
+  #          name: 'MixinSplice ${{ needs.build.outputs.ver }}'
+  #          version: ${{ needs.build.outputs.ver }}
   #          version-type: alpha
   #          changelog: ${{ inputs.release-body }}
-  #          loaders: ${{ matrix.loader }}
+  #          loaders: ${{ env.LOADER }}
   #          java: '21'
   #          fail-mode: fail
 
@@ -144,35 +145,26 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    env:
-      RELEASE_VERSION: ${{ needs.build.outputs.ver }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ inputs.branch }}
       - name: Bump Version
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -C "gh/release-${RELEASE_VERSION}"
-          CURRENT=$(sed -n 's/^mod_version = //p' gradle.properties)
-          if [[ "$CURRENT" != "$RELEASE_VERSION" ]]; then
-            echo "main is at $CURRENT, expected released version $RELEASE_VERSION" >&2
-            exit 1
-          fi
-          BUMPED=$(printf '%s\n' "$RELEASE_VERSION" | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-          sed -i "s/^mod_version = .*/mod_version = ${BUMPED}/" gradle.properties
+          git switch -C gh/release-${{ inputs.branch }}
+          BUMPED=$(echo ${{ needs.build.outputs.ver }} | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          sed -i "s/= ${{ needs.build.outputs.ver }}/= ${BUMPED}/" gradle.properties
           git commit -am "Bump version to ${BUMPED}"
       - name: Prepend to CHANGELOG
         if: inputs.changelog-body
-        env:
-          CHANGELOG_BODY: ${{ inputs.changelog-body }}
         run: |
-          { head -n 1 CHANGELOG.md; printf '\n%s\n' "$CHANGELOG_BODY"; tail -n +2 CHANGELOG.md; } > temp.md && mv temp.md CHANGELOG.md
+          { head -n 2 CHANGELOG.md; echo -e "${{ inputs.changelog-body }}"; tail -n +3 CHANGELOG.md; } > temp.md && mv temp.md CHANGELOG.md
           git commit -am "Updated CHANGELOG"
       - name: Push and PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git push --force --set-upstream origin "gh/release-${RELEASE_VERSION}"
-          gh pr create --base main --head "gh/release-${RELEASE_VERSION}" --title "RELEASE for ${RELEASE_VERSION} [no-snapshot]" --body "Created by GH Workflow" --label "ignore changelog"
+          git push --force --set-upstream origin gh/release-${{ inputs.branch }}
+          gh pr create -B ${{ inputs.branch }} -H gh/release-${{ inputs.branch }} --title "RELEASE for ${{ inputs.branch }} [no-snapshot]" --body "Created by GH Workflow" --label "ignore changelog"

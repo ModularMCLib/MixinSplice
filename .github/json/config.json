@@ -21,7 +21,7 @@
       "name": "VERSION",
       "source": "TO_TAG",
       "transformer": {
-        "pattern": "^v?(.+)$",
+        "pattern": "v?([0-9\\.]+)(-[0-9\\.]+)?",
         "target": "$1"
       }
     }
@@ -29,7 +29,11 @@
   "empty_template": "",
   "ignore_labels": ["ignore changelog"],
   "tag_resolver": {
-    "method": "semver"
+    "method": "semver",
+    "transformer": {
+      "pattern": "v?([0-9\\.]+)(-[0-9\\.]+)?",
+      "target": "$1"
+    }
   },
   "max_pull_requests": 1000,
   "max_back_track_time_days": 365,

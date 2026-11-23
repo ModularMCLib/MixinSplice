@@ -21,7 +21,7 @@ loom {
 
 ext.platformMetadata = [
         platform_version_range  : ">=${libs.versions.fabricLoaderMinimum.get()}",
-        minecraft_version_range : ">=${libs.versions.minecraftMinimum.get()}"
+        minecraft_version_range : '>=1.21'
 ]
 
 apply from: "$rootDir/gradle/scripts/resources.gradle"
