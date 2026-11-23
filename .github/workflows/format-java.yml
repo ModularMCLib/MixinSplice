@@ -3,7 +3,7 @@ name: Java Formatting
 
 on:
   push:
-    branches: ['1.21']
+    branches: ['main']
     paths:
       - '**/src/*/java/**'
       - '**/src/*/kotlin/**'

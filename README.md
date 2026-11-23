@@ -75,7 +75,9 @@ dependencies {
 .\gradlew.bat publishToMavenLocal
 ```
 
-共享库、平台主 JAR、源码 JAR 和单独构建的 slim JAR 位于根项目的 `build/libs/`。通过 `publishToMavenLocal` 安装制品后，消费方可使用 `mavenLocal()` 解析依赖。
+共享库、平台主 JAR、源码 JAR 和单独构建的 slim JAR 位于根项目的 `build/libs/`。平台主包命名为 `mixinsplice-<loader>-<版本>.jar`。通过 `publishToMavenLocal` 安装制品后，消费方可使用 `mavenLocal()` 解析依赖。
+
+`main` 上的构建更新 `latest` 快照。正式发布使用项目版本标签，例如 `v0.1.0`。
 
 ## English
 
@@ -150,4 +152,6 @@ Use Java 21 to run the Gradle Wrapper. Set `GRADLE_USER_HOME` to select the Grad
 .\gradlew.bat publishToMavenLocal
 ```
 
-The shared library, platform JARs, sources, and separately built slim JARs are written to the root project's `build/libs/` directory. After running `publishToMavenLocal`, consumer builds can resolve the artifacts from `mavenLocal()`.
+The shared library, platform JARs, sources, and separately built slim JARs are written to the root project's `build/libs/` directory. The main platform JARs are named `mixinsplice-<loader>-<version>.jar`. After running `publishToMavenLocal`, consumer builds can resolve the artifacts from `mavenLocal()`.
+
+Builds on `main` update the `latest` snapshot. Stable releases use project version tags such as `v0.1.0`.
