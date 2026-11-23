@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "${mod_id}",
+	"version": "${version}",
+	"name": "${mod_name}",
+	"description": "${mod_description}",
+	"authors": ["QiuYe"],
+	"contact": {
+		"homepage": "${mod_url}",
+		"issues": "${mod_issue_tracker}"
+	},
+	"license": "${mod_license}",
+	"environment": "*",
+	"mixins": ["${mod_id}.mixins.json"],
+	"depends": {
+		"${mod_id}_common": ">=${common_version}",
+		"fabricloader": "${platform_version_range}",
+		"minecraft": "${minecraft_version_range}",
+		"java": ">=21"
+	}
+}

@@ -1,0 +1,39 @@
+import net.fabricmc.loom.task.prod.ServerProductionRunTask
+import org.gradle.jvm.tasks.Jar
+
+plugins {
+    id 'java-library'
+    alias libs.plugins.fabricLoom
+}
+
+description = 'Fabric 平台接入与发行'
+
+dependencies {
+    minecraft(libs.minecraft)
+    mappings loom.officialMojangMappings()
+    modImplementation(libs.fabricLoader)
+    compileOnly project(':core')
+}
+
+loom {
+    serverOnlyMinecraftJar()
+}
+
+ext.platformMetadata = [
+        platform_version_range  : ">=${libs.versions.fabricLoaderMinimum.get()}",
+        minecraft_version_range : '>=1.21'
+]
+
+apply from: "$rootDir/gradle/scripts/resources.gradle"
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
+apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
+
+tasks.register('runGameTestServer', ServerProductionRunTask) {
+    runDir = layout.buildDirectory.dir('run/gameTestServer')
+    loaderVersion = libs.versions.fabricLoader.get()
+    mods.setFrom(tasks.named('remapJar', Jar).flatMap { it.archiveFile },
+            tasks.named('testModJar', Jar).flatMap { it.archiveFile })
+    programArgs.set(['--initSettings'])
+    jvmArgs.add('-Dmixin.debug.strict.targets=true')
+}

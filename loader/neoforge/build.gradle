@@ -1,0 +1,41 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'maven-publish'
+    alias libs.plugins.neoGradle
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly project(':core')
+    compileOnly(libs.jspecify)
+    implementation(libs.neoForge)
+    testCompileOnly project(':api')
+    testCompileOnly(libs.asm.tree)
+    testCompileOnly(libs.jspecify)
+}
+
+sourceSets.test {
+    // 由本模块编译共享用例，NeoGradle 运行时直接使用当前项目的测试源集。
+    java.srcDir project(':tests').layout.projectDirectory.dir('src/testFixtures/java')
+    resources.srcDir project(':tests').layout.projectDirectory.dir('src/testFixtures/resources')
+}
+
+ext.platformMetadata = [
+        loader_version_range    : "[${libs.versions.loader.get()},)",
+        platform_version_range  : "[${libs.versions.neoForgeMinimum.get()},)",
+        minecraft_version_range : '[1.21,)'
+]
+
+apply from: "$rootDir/gradle/scripts/resources.gradle"
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/neogradle.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
+
+tasks.named('test', Test) {
+    // 游戏内用例从 runGameTestServer 运行。
+    failOnNoDiscoveredTests = false
+}

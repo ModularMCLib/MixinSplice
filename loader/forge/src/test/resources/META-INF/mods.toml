@@ -1,0 +1,15 @@
+modLoader = "lowcodefml"
+loaderVersion = "[51,)"
+license = "GNU AGPL 3.0"
+
+[[mods]]
+modId = "mixinsplice_runtime_test"
+version = "1"
+displayName = "MixinSplice Runtime Test"
+
+[[dependencies.mixinsplice_runtime_test]]
+modId = "mixinsplice"
+mandatory = true
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "SERVER"

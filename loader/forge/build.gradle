@@ -1,0 +1,66 @@
+import org.gradle.jvm.tasks.Jar
+
+plugins {
+    id 'java-library'
+    alias libs.plugins.forgeGradle
+    alias libs.plugins.forgeJarJar
+}
+
+description = 'Forge 平台接入与发行'
+
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'SpongePowered'
+                url = 'https://repo.spongepowered.org/maven/'
+            }
+        }
+        filter { includeModule('org.spongepowered', 'mixin') }
+    }
+}
+
+dependencies {
+    compileOnly project(':core')
+    compileOnly(libs.forge.loader)
+    compileOnly(libs.forge.core)
+    compileOnly(libs.forge.securemodules)
+    compileOnly(libs.maven.artifact)
+    compileOnly(libs.jspecify)
+    testImplementation minecraft.dependency("net.minecraftforge:forge:${libs.versions.minecraft.get()}-${libs.versions.forgeTestLoader.get()}")
+}
+
+minecraft {
+    mappings channel: 'official', version: libs.versions.minecraft.get()
+    runs.register('gameTestServer') {
+        workingDir = layout.buildDirectory.dir('run/gameTestServer')
+        systemProperty 'forge.enabledGameTestNamespaces', mod_id
+        systemProperty 'mixin.debug.strict.targets', 'true'
+    }
+}
+
+ext.platformMetadata = [
+        loader_version_range    : '[51,)',
+        platform_version_range  : "[${libs.versions.forgeLoaderMinimum.get()},62)",
+        minecraft_version_range : '[1.21,)'
+]
+
+apply from: "$rootDir/gradle/scripts/resources.gradle"
+apply from: "$rootDir/gradle/scripts/jars.gradle"
+apply from: "$rootDir/gradle/scripts/publishing.gradle"
+apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
+
+def testMod = tasks.named('testModJar', Jar) {
+    manifest.attributes('MixinConfigs': 'mixinsplice.gametest.mixins.json,mixinsplice.plugin.gametest.mixins.json')
+}
+def forgeMod = tasks.named('jarJar', Jar)
+
+sourceSets.test {
+    // Forge 引导器按路径创建模块，由各模组的 JAR 一次提供类和资源。
+    runtimeClasspath = runtimeClasspath - output - sourceSets.main.output + files(
+            forgeMod.flatMap { it.archiveFile }, testMod.flatMap { it.archiveFile })
+}

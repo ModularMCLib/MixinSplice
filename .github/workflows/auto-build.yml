@@ -3,7 +3,7 @@ name: Latest Build
 on:
   push:
     branches: ['1.21']
-    paths: ['src/**', '**/*.gradle', 'gradle.properties']
+    paths: ['**/src/**', '**/*.gradle', 'gradle.properties', 'gradle/**', 'gradlew*']
 
 concurrency:
   group: auto-build-${{ github.ref }}
@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # do a full checkout instead of a shallow clone of HEAD so spotless's ratchetFrom works
+          fetch-depth: 0 # Spotless 的 ratchetFrom 需要完整提交历史。
       - name: Setup Build
         uses: ./.github/actions/build_setup
       - name: Grant execute permission for gradlew
@@ -65,7 +65,7 @@ jobs:
           name: '${{ github.ref_name }}-${{ steps.ver.outputs.version}} SNAPSHOT ${{ env.VERSION_SUFFIX }}'
           prerelease: true
           body: |
-            The latest build of Template for Minecraft ${{ github.ref_name }}.
-            Please report any [issues](https://github.com/ExtremelyFrozen/ExtremelyFrozen-Template/issues).
+            The latest build of MixinSplice for Minecraft ${{ github.ref_name }}.
+            Please report any [issues](${{ github.server_url }}/${{ github.repository }}/issues).
             ${{ steps.changelog.outputs.changelog }}
           files: build/libs/*.jar

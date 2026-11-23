@@ -1,40 +1,114 @@
-jar {
+import org.gradle.jvm.tasks.Jar
+
+def fabric = project.name == 'fabric'
+def forge = project.name == 'forge'
+if (forge) {
+    jarJar.register()
+} else if (!fabric) {
+    jarJar.disableDefaultSources()
+}
+
+configurations {
+    bundledSources {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    def common = project(path: ':core', configuration: 'commonElements')
+    if (fabric) {
+        include common
+    } else if (forge) {
+        jarJar(common) { dependency ->
+            jarJar.configure(dependency) {
+                module.name = "${mod_id}-common"
+                version = project.version.toString()
+            }
+        }
+    } else {
+        jarJar common
+    }
+
+    bundledSources project(path: ':core', configuration: 'sourcesElements')
+}
+
+def bundledSources = configurations.bundledSources
+
+tasks.named('processResources', ProcessResources) {
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+    // 平台包注册同一份初始化配置，插件类由内嵌共享库提供。
+    from(project(':core').sourceSets.main.resources) {
+        include "${mod_id}.mixins.json"
+    }
+}
+
+def mainArchive = tasks.named(fabric ? 'remapJar' : 'jarJar', Jar) {
+    archiveClassifier = ''
+    if (!fabric && !forge) {
+        from sourceSets.main.output
+    }
     exclude "**/.cache"
 }
 
-tasks.register('slimJar', Jar) {
-    dependsOn("classes")
+def slimArchive = tasks.register('slimJar', Jar) {
     archiveClassifier = "slim"
-    from sourceSets.main.output
-}
-
-java {
-    withSourcesJar()
-}
-
-// Use delombok'd files for sources
-sourcesJar {
-    exclude {
-        sourceSets.main.allSource.contains it.file
+    from(sourceSets.main.output) {
+        if (fabric) {
+            exclude 'fabric.mod.json'
+        }
     }
-    from delombok
+    dependsOn mainArchive
+    from({ zipTree(mainArchive.get().archiveFile.get().asFile) }) {
+        if (fabric) {
+            include 'META-INF/jars/**', 'fabric.mod.json'
+        } else {
+            include 'META-INF/jarjar/**'
+        }
+    }
 }
+
+def sourcesArchive = tasks.named('sourcesJar', Jar) {
+    dependsOn(bundledSources)
+    from { bundledSources.collect { zipTree(it) } }
+    from(project(':core').sourceSets.main.resources) {
+        include "${mod_id}.mixins.json"
+    }
+}
+def publishedSources = fabric ? tasks.named('remapSourcesJar', Jar) : sourcesArchive
 
 base {
-    archivesName = "${project.name}-${libs.versions.minecraft.get()}"
+    // 平台子项目名同时用作发行文件名中的 Loader 标识。
+    archivesName = "${rootProject.name}-${project.name}-${libs.versions.minecraft.get()}"
 }
 
-afterEvaluate {
-    tasks.withType(org.gradle.jvm.tasks.Jar).configureEach {
-        destinationDirectory = file('build/libs/')
+[mainArchive, slimArchive, publishedSources].each { archive ->
+    archive.configure {
+        destinationDirectory = rootProject.layout.buildDirectory.dir('libs')
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+    }
+}
+
+// Loom 和 Forge JarJar 从普通 JAR 继承 Manifest。
+def manifestArchive = fabric || forge ? tasks.named('jar', Jar) : mainArchive
+[manifestArchive, slimArchive, sourcesArchive].each { archive ->
+    archive.configure {
         manifest.attributes([
-                'MixinConfigs': "template.mixins.json",
-                'Specification-Title': project.name,
+                'Specification-Title': mod_name,
                 'Specification-Version': mod_version,
-                'Specification-Vendor': 'ExtremelyFrozen Team',
-                'Implementation-Title': base.archivesName,
+                'Specification-Vendor': 'ModularMCLib',
+                'Implementation-Title': base.archivesName.get(),
                 'Implementation-Version': version,
-                'Implementation-Vendor': 'ExtremelyFrozen Team',
+                'Implementation-Vendor': 'ModularMCLib',
         ])
+    }
+}
+
+if (forge) {
+    [manifestArchive, slimArchive].each { archive ->
+        archive.configure {
+            manifest.attributes('MixinConfigs': "${mod_id}.mixins.json")
+        }
     }
 }

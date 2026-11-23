@@ -1,0 +1,8 @@
+{
+	"schemaVersion": 1,
+	"id": "${mod_id}_common",
+	"version": "${version}",
+	"name": "${mod_name} Common",
+	"license": "${mod_license}",
+	"environment": "*"
+}

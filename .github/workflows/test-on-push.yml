@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ['**']
 
-# Cancel previous jobs if PR gets another push
+# PR 收到新提交时取消上一轮任务。
 concurrency:
   group: PR-test-${{ github.ref }}
   cancel-in-progress: true
@@ -22,8 +22,8 @@ jobs:
         with:
           filters: |
             code:
-              - 'src/**'
-              - '*.gradle'
+              - '**/src/**'
+              - '**/*.gradle'
               - 'gradle.properties'
               - 'gradlew*'
               - 'gradle/**'
@@ -32,11 +32,26 @@ jobs:
         uses: ./.github/actions/build_setup
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Run GameTests
+      - name: Run Fabric server tests
+        if: steps.filter.outputs.code == 'true'
+        id: fabric
+        continue-on-error: true
+        run: ./gradlew :loader:fabric:runGameTestServer
+      - name: Run Forge server tests
+        if: steps.filter.outputs.code == 'true'
+        id: forge
+        continue-on-error: true
+        run: ./gradlew :loader:forge:runTestGameTestServer
+      - name: Run NeoForge GameTests
         if: steps.filter.outputs.code == 'true'
         id: gametest
         continue-on-error: true
-        run: ./gradlew runGameTestServer
+        run: ./gradlew :loader:neoforge:runGameTestServer
+      - name: Run JVM tests
+        if: steps.filter.outputs.code == 'true'
+        id: jvm
+        continue-on-error: true
+        run: ./gradlew :tests:test --rerun
       - name: Update “Tests Passed” / “Tests Failed” labels
         if: steps.filter.outputs.code == 'true' && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
@@ -45,7 +60,7 @@ jobs:
             const [add, remove] = {
               success: ['Tests: Passed','Tests: Failed'],
               failure: ['Tests: Failed','Tests: Passed']
-            }['${{ steps.gametest.outcome }}'];
+            }['${{ contains(steps.*.outcome, 'failure') && 'failure' || 'success' }}'];
 
             const { owner, repo }    = context.repo;
             const issue_number       = context.payload.pull_request.number;
@@ -58,5 +73,5 @@ jobs:
               .removeLabel({ owner, repo, issue_number, name: remove })
               .catch(() => {});
       - name: Fail on GameTest failures
-        if: steps.filter.outputs.code == 'true' && steps.gametest.outcome == 'failure'
+        if: steps.filter.outputs.code == 'true' && contains(steps.*.outcome, 'failure')
         run: exit 1

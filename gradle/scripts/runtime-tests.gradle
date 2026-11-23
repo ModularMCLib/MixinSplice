@@ -1,0 +1,26 @@
+dependencies {
+    testCompileOnly project(':api')
+    testCompileOnly libs.asm.tree
+    testCompileOnly libs.jspecify
+}
+
+sourceSets.test {
+    // 服务端运行从测试模组的源集发现共享用例。
+    java.srcDir project(':tests').layout.projectDirectory.dir('src/testFixtures/java')
+    resources.srcDir project(':tests').layout.projectDirectory.dir('src/testFixtures/resources')
+}
+
+def testMod = tasks.register('testModJar', Jar) {
+    archiveClassifier = 'test-mod'
+    from sourceSets.test.output
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+
+tasks.named('test', Test) {
+    // 这些用例由服务器中的测试模组执行。
+    failOnNoDiscoveredTests = false
+}
+
+tasks.named('check') {
+    dependsOn testMod
+}

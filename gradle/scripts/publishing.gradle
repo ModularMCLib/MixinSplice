@@ -1,15 +1,26 @@
-publishing {
-//    publications {
-//        mavenJava(MavenPublication) {
-//            artifactId = base.archivesName.get()
-//            artifact(reobfSlimJar)
-//            from components.java
-//        }
-//    }
+import org.gradle.jvm.tasks.Jar
 
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+apply plugin: 'maven-publish'
+
+boolean isCommon = project.path == ':core'
+boolean isFabric = project.path == ':loader:fabric'
+def platformArchive = isFabric ? 'remapJar' : 'jarJar'
+def binaryArchive = tasks.named(isCommon ? 'jar' : platformArchive, Jar)
+def sourceArchive = tasks.named(isFabric ? 'remapSourcesJar' : 'sourcesJar', Jar)
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = "${mod_id}-${isCommon ? 'common' : project.name}"
+            // 游戏依赖由加载器提供，平台发行包已内嵌共享库。
+            artifact(binaryArchive)
+            artifact(sourceArchive)
+        }
+    }
+
+    // Maven 发布配置参见 https://docs.gradle.org/current/userguide/publishing_maven.html
     repositories {
-//         Add repositories to publish to here.
+//         在此配置发布目标仓库。
 //        maven {
 //            url = "https://maven.gtceu.com"
 //            credentials {

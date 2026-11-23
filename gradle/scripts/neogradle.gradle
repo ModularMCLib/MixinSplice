@@ -1,0 +1,44 @@
+subsystems {
+    parchment {
+        minecraftVersion = libs.versions.minecraft.get()
+        mappingsVersion = libs.versions.parchment.get()
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+def commonJar = project(':core').tasks.named('jar', Jar)
+dependencies {
+    // 开发运行加载的是未打包的源集，将共享库加入同一游戏层。
+    localRuntime files(commonJar)
+}
+
+runs {
+    configureEach {
+        workingDirectory project.layout.projectDirectory.dir('run').dir(name)
+        modSources.add(mod_id, sourceSets.main)
+        modSources.primary(sourceSets.main)
+        jvmArgument "-ea:${maven_group}..."
+        systemProperty 'forge.logging.console.level', 'info'
+    }
+
+    client {}
+    server {
+        argument '--nogui'
+    }
+    gameTestServer {
+        modSources.add(mod_id, sourceSets.test)
+        systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        arguments.addAll '--mixin.config', 'mixinsplice.gametest.mixins.json', '--mixin.config', 'mixinsplice.plugin.gametest.mixins.json',
+                '--mixin.config', 'mixinsplice.extras.gametest.mixins.json'
+    }
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}

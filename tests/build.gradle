@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    testFixturesImplementation project(':api')
+    testFixturesCompileOnly libs.mixin
+    testFixturesCompileOnly libs.asm.tree
+    testFixturesCompileOnly libs.jspecify
+    testImplementation project(':core')
+    testImplementation libs.mixin
+    testImplementation libs.asm.tree
+    testImplementation libs.asm.commons
+    testImplementation platform(libs.junit.bom)
+    testImplementation libs.junit.jupiter
+    testRuntimeOnly libs.junit.launcher
+    testRuntimeOnly libs.guava
+}
+
+tasks.named('test', Test) {
+    useJUnitPlatform()
+}

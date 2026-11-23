@@ -1,4 +1,4 @@
-# Manages labels on new issues
+# 为新 Issue 管理标签。
 name: Issue Labels
 
 on:
