@@ -20,10 +20,6 @@
   "ignore_labels": ["ignore changelog"],
   "tag_resolver": {
     "method": "semver",
-    "filter": {
-      "pattern": "^(?!v?[0-9\\.]+(-1\\.21)$).+$",
-      "flags": "gu"
-    },
     "transformer": {
       "pattern": "v?([0-9\\.]+)(-[0-9\\.]+)?",
       "target": "$1"
@@ -31,5 +27,5 @@
   },
   "max_pull_requests": 1000,
   "max_back_track_time_days": 365,
-  "base_branches": ["1.21"]
+  "base_branches": ["main"]
 }

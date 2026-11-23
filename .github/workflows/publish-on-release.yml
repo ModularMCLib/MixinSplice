@@ -30,15 +30,13 @@ jobs:
           fetchViaCommits: true
           failOnError: true
 
-  publish-21:
-    name: 1.21.1
+  publish:
+    name: Publish MixinSplice
     needs: [ meta ]
-    if: ${{ contains(github.ref_name, '1.21') }}
     secrets: inherit
     uses: ./.github/workflows/publish.yml
     with:
       simulate: ${{ startsWith(github.event.release.name, 'simulate') || github.repository_owner != 'ExtremelyFrozen' }}
       tag-name: ${{ github.ref_name }}
-      version: '1.21'
       release-body: ${{ github.event.release.body }}
       changelog-body: ${{ needs.meta.outputs.CHANGELOG }}
