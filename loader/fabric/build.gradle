@@ -1,22 +1,22 @@
+import net.fabricmc.loom.task.prod.ServerProductionRunTask
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id 'java-library'
-    alias libs.plugins.neoGradle
+    alias libs.plugins.fabricLoom
 }
 
 description = 'Fabric 平台接入与发行'
 
-repositories {
-    maven {
-        name = 'Fabric'
-        url = 'https://maven.fabricmc.net/'
-        content { includeGroup('net.fabricmc') }
-    }
+dependencies {
+    minecraft(libs.minecraft)
+    mappings loom.officialMojangMappings()
+    modImplementation(libs.fabricLoader)
+    compileOnly project(':core')
 }
 
-dependencies {
-    compileOnly project(':core')
-    compileOnly(libs.fabricLoader)
-    testCompileOnly(libs.fabricLoader)
+loom {
+    serverOnlyMinecraftJar()
 }
 
 ext.platformMetadata = [
@@ -28,3 +28,12 @@ apply from: "$rootDir/gradle/scripts/resources.gradle"
 apply from: "$rootDir/gradle/scripts/jars.gradle"
 apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
+
+tasks.register('runGameTestServer', ServerProductionRunTask) {
+    runDir = layout.buildDirectory.dir('run/gameTestServer')
+    loaderVersion = libs.versions.fabricLoader.get()
+    mods.setFrom(tasks.named('remapJar', Jar).flatMap { it.archiveFile },
+            tasks.named('testModJar', Jar).flatMap { it.archiveFile })
+    programArgs.set(['--initSettings'])
+    jvmArgs.add('-Dmixin.debug.strict.targets=true')
+}

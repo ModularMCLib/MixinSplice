@@ -4,8 +4,12 @@ neoForge = "21.1.265"
 neoForgeMinimum = "21.1.26"
 fabricLoader = "0.20.1"
 fabricLoaderMinimum = "0.16.0"
+fabricLoom = "1.17.21"
 forgeLoader = "1.21-51.0.33"
 forgeLoaderMinimum = "51.0.33"
+forgeTestLoader = "52.1.20"
+forgeGradle = "7.0.40"
+forgeJarJar = "0.2.3"
 loader = "4"
 parchment = "2024.11.17" # https://parchmentmc.org/docs/getting-started
 spotless = "8.11.0"
@@ -35,5 +39,8 @@ junit-launcher          = { module = "org.junit.platform:junit-platform-launcher
 guava                   = { module = "com.google.guava:guava", version.ref = "guava" }
 
 [plugins]
+fabricLoom              = { id = "net.fabricmc.fabric-loom-remap", version.ref = "fabricLoom" }
+forgeGradle             = { id = "net.minecraftforge.gradle", version.ref = "forgeGradle" }
+forgeJarJar             = { id = "net.minecraftforge.jarjar", version.ref = "forgeJarJar" }
 neoGradle               = { id = "net.neoforged.gradle.userdev", version.ref = "neoGradle" }
 spotless                = { id = "com.diffplug.spotless", version.ref = "spotless" }

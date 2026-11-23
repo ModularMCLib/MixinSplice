@@ -1,16 +1,18 @@
+import org.gradle.jvm.tasks.Jar
+
 plugins {
     id 'java-library'
-    alias libs.plugins.neoGradle
+    alias libs.plugins.forgeGradle
+    alias libs.plugins.forgeJarJar
 }
 
 description = 'Forge 平台接入与发行'
 
 repositories {
-    maven {
-        name = 'Forge'
-        url = 'https://maven.minecraftforge.net/'
-        content { includeGroup('net.minecraftforge') }
-    }
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+    mavenCentral()
     exclusiveContent {
         forRepository {
             maven {
@@ -29,8 +31,16 @@ dependencies {
     compileOnly(libs.forge.securemodules)
     compileOnly(libs.maven.artifact)
     compileOnly(libs.jspecify)
-    testCompileOnly(libs.mixin)
-    testCompileOnly(libs.asm.tree)
+    testImplementation minecraft.dependency("net.minecraftforge:forge:${libs.versions.minecraft.get()}-${libs.versions.forgeTestLoader.get()}")
+}
+
+minecraft {
+    mappings channel: 'official', version: libs.versions.minecraft.get()
+    runs.register('gameTestServer') {
+        workingDir = layout.buildDirectory.dir('run/gameTestServer')
+        systemProperty 'forge.enabledGameTestNamespaces', mod_id
+        systemProperty 'mixin.debug.strict.targets', 'true'
+    }
 }
 
 ext.platformMetadata = [
@@ -44,6 +54,13 @@ apply from: "$rootDir/gradle/scripts/jars.gradle"
 apply from: "$rootDir/gradle/scripts/publishing.gradle"
 apply from: "$rootDir/gradle/scripts/runtime-tests.gradle"
 
-tasks.named('testModJar', Jar) {
-    manifest.attributes('MixinConfigs': 'mixinsplice.gametest.mixins.json,mixinsplice.plugin.gametest.mixins.json,mixinsplice.forge.gametest.mixins.json')
+def testMod = tasks.named('testModJar', Jar) {
+    manifest.attributes('MixinConfigs': 'mixinsplice.gametest.mixins.json,mixinsplice.plugin.gametest.mixins.json')
+}
+def forgeMod = tasks.named('jarJar', Jar)
+
+sourceSets.test {
+    // Forge 引导器按路径创建模块，由各模组的 JAR 一次提供类和资源。
+    runtimeClasspath = runtimeClasspath - output - sourceSets.main.output + files(
+            forgeMod.flatMap { it.archiveFile }, testMod.flatMap { it.archiveFile })
 }

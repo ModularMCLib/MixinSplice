@@ -1,17 +1,18 @@
-// Fabric 和 Forge 通过独立测试模组运行用例，关闭 NeoGradle 按任务名自动创建的运行配置。
-subsystems.conventions.runs.shouldDefaultRunsBeCreated.set(false)
-
 dependencies {
-    testImplementation(testFixtures(project(':tests')))
+    testCompileOnly project(':api')
+    testCompileOnly libs.asm.tree
+    testCompileOnly libs.jspecify
 }
 
-def fixtures = project(':tests').tasks.named('testFixturesJar', Jar)
+sourceSets.test {
+    // 服务端运行从测试模组的源集发现共享用例。
+    java.srcDir project(':tests').layout.projectDirectory.dir('src/testFixtures/java')
+    resources.srcDir project(':tests').layout.projectDirectory.dir('src/testFixtures/resources')
+}
+
 def testMod = tasks.register('testModJar', Jar) {
     archiveClassifier = 'test-mod'
     from sourceSets.test.output
-    dependsOn fixtures
-    from { zipTree(fixtures.get().archiveFile.get().asFile) }
-    manifest.attributes('MixinConfigs': 'mixinsplice.gametest.mixins.json,mixinsplice.plugin.gametest.mixins.json')
     duplicatesStrategy = DuplicatesStrategy.FAIL
 }
 

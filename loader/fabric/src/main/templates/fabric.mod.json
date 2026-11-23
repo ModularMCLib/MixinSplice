@@ -12,11 +12,6 @@
 	"license": "${mod_license}",
 	"environment": "*",
 	"mixins": ["${mod_id}.mixins.json"],
-	"jars": [
-		{
-			"file": "META-INF/jarjar/${common_artifact}-${common_version}.jar"
-		}
-	],
 	"depends": {
 		"${mod_id}_common": ">=${common_version}",
 		"fabricloader": "${platform_version_range}",

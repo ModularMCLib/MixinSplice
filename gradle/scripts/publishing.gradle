@@ -1,8 +1,12 @@
+import org.gradle.jvm.tasks.Jar
+
 apply plugin: 'maven-publish'
 
 boolean isCommon = project.path == ':core'
-def binaryArchive = tasks.named(isCommon ? 'jar' : 'jarJar', Jar)
-def sourceArchive = tasks.named('sourcesJar', Jar)
+boolean isFabric = project.path == ':loader:fabric'
+def platformArchive = isFabric ? 'remapJar' : 'jarJar'
+def binaryArchive = tasks.named(isCommon ? 'jar' : platformArchive, Jar)
+def sourceArchive = tasks.named(isFabric ? 'remapSourcesJar' : 'sourcesJar', Jar)
 
 publishing {
     publications {
