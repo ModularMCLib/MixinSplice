@@ -49,7 +49,7 @@ def sourcesArchive = tasks.named('sourcesJar', Jar) {
 
 base {
     // 平台子项目名同时用作发行文件名中的 Loader 标识。
-    archivesName = "${rootProject.name}-${project.name}--${libs.versions.minecraft.get()}"
+    archivesName = "${rootProject.name}-${project.name}-${libs.versions.minecraft.get()}"
 }
 
 [mainArchive, slimArchive, sourcesArchive].each { archive ->

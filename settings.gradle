@@ -39,7 +39,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = mod_name
+rootProject.name = "${mod_id}"
 
 include 'api', 'core'
 include 'loader:fabric', 'loader:forge', 'loader:neoforge'
