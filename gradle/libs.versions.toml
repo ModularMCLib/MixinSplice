@@ -1,5 +1,6 @@
 [versions]
-minecraft = "1.21.1"
+minecraft = "1.21.1" # 开发运行和测试使用的版本
+minecraftMinimum = "1.21"
 neoForge = "21.1.265"
 neoForgeMinimum = "21.1.26"
 fabricLoader = "0.20.1"

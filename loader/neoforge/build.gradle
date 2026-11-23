@@ -27,7 +27,7 @@ sourceSets.test {
 ext.platformMetadata = [
         loader_version_range    : "[${libs.versions.loader.get()},)",
         platform_version_range  : "[${libs.versions.neoForgeMinimum.get()},)",
-        minecraft_version_range : '[1.21,)'
+        minecraft_version_range : "[${libs.versions.minecraftMinimum.get()},)"
 ]
 
 apply from: "$rootDir/gradle/scripts/resources.gradle"
