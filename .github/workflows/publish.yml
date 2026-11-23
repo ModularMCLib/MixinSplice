@@ -10,10 +10,6 @@ on:
         description: 'Tag to build from and upload to'
         required: true
         type: string
-      branch:
-        description: 'Branch to build from and update after release'
-        required: true
-        type: string
       release-body:
         description: 'Body for published release notes'
         required: false
@@ -79,62 +75,6 @@ jobs:
           tag_name: ${{ inputs.tag-name }}
           files: ./*.jar
           fail_on_unmatched_files: true
-
-  #  publish-modrinth:
-  #    name: Publish to Modrinth
-  #    needs: build
-  #    if: ${{ !inputs.simulate }}
-  #    runs-on: ubuntu-latest
-  #    permissions:
-  #      contents: write
-  #    steps:
-  #      - name: Download artifacts
-  #        uses: actions/download-artifact@v4
-  #        with:
-  #          name: build-artifacts-${{ inputs.tag-name }}
-  #      - name: Publish Mod
-  #        env:
-  #          LOADER: neoforge
-  #        uses: Kir-Antipov/mc-publish@v3.3.0
-  #        with:
-  #          modrinth-id: aADDBrNC
-  #          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-  #          files: ./mixinsplice-${{ env.LOADER }}-${{ needs.build.outputs.ver }}.jar
-  #          name: 'MixinSplice ${{ needs.build.outputs.ver }}'
-  #          version: ${{ needs.build.outputs.ver }}
-  #          version-type: beta
-  #          changelog: ${{ inputs.release-body }}
-  #          loaders: ${{ env.LOADER }}
-  #          java: '21'
-  #          fail-mode: fail
-  #
-  #  publish-cf:
-  #    name: Publish to CF
-  #    needs: build
-  #    if: ${{ !inputs.simulate }}
-  #    runs-on: ubuntu-latest
-  #    permissions:
-  #      contents: write
-  #    steps:
-  #      - name: Download artifacts
-  #        uses: actions/download-artifact@v4
-  #        with:
-  #          name: build-artifacts-${{ inputs.tag-name }}
-  #      - name: Publish Mod
-  #        env:
-  #          LOADER: neoforge
-  #        uses: Kir-Antipov/mc-publish@v3.3.0
-  #        with:
-  #          curseforge-id: 1397216
-  #          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-  #          files: ./mixinsplice-${{ env.LOADER }}-${{ needs.build.outputs.ver }}.jar
-  #          name: 'MixinSplice ${{ needs.build.outputs.ver }}'
-  #          version: ${{ needs.build.outputs.ver }}
-  #          version-type: alpha
-  #          changelog: ${{ inputs.release-body }}
-  #          loaders: ${{ env.LOADER }}
-  #          java: '21'
-  #          fail-mode: fail
 
   # 发布成功后，通过 PR 更新版本号和变更日志。
   bump-version-and-changelog:
