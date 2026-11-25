@@ -77,7 +77,9 @@ PR 的 CI 依次启动 Fabric 服务端、Forge 服务端和 NeoForge GameTest �
 
 ## 发布与维护分支
 
-`main` 跟随 MixinSplice 的最新主版本。不兼容升级时，从升级前的提交切出 `N.x` 维护分支，按需回移修复。`N` 取 MixinSplice 的主版本号。正式发布使用完整版本号作为标签。
+`main` 跟随 MixinSplice 的最新主版本。不兼容升级时，从升级前的提交切出 `N.x` 维护分支，按需回移修复。`N` 取 MixinSplice 的主版本号。创建正式 Release 时，从对应的 `main` 或 `N.x` 创建完整版本号标签。版本更新 PR 指向 Release 记录的目标分支。
+
+推送源码或 Gradle 配置到 `main` 和 `N.x` 时，CI 构建该次推送的提交。GitHub 快照标签使用 `latest-分支名`，例如 `latest-main` 和 `latest-1.x`。快照变更日志使用本次推送的提交范围。
 
 CurseForge 发布需要 GitHub Actions 变量 `CURSEFORGE_ID` 和密钥 `CURSEFORGE_TOKEN`。各加载器的 Minecraft 版本清单随相应发行线的发布配置维护。
 
