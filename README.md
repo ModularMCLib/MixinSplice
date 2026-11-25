@@ -1,6 +1,29 @@
-# MixinSplice
+<h1 align="center">MixinSplice</h1>
 
-[简体中文](#简体中文) · [English](#english)
+<p align="center">
+  面向 Fabric、Forge 和 NeoForge 的 SpongePowered Mixin 扩展。<br>
+  A SpongePowered Mixin extension for Fabric, Forge, and NeoForge.
+</p>
+
+<p align="center">
+  <a href="https://github.com/ModularMCLib/MixinSplice/releases"><img src="https://img.shields.io/badge/GitHub-Releases-24292F?logo=github&amp;logoColor=white&amp;style=for-the-badge" alt="GitHub Releases"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge" alt="License"></a>
+  <a href="https://discord.gg/HwnF3RTPtH"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&amp;logoColor=white&amp;style=for-the-badge" alt="Discord"></a>
+</p>
+
+<p align="center">
+  <a href="#简体中文">简体中文</a> · <a href="#english">English</a>
+</p>
+
+## 分支与版本 / Branches and Versions
+
+| 分支 / Branch | 测试基线 / Tested Minecraft | Java | CI | 最新 Maven / Latest Maven | 下载 / Download |
+| --- | --- | --- | --- | --- | --- |
+| [`main`](https://github.com/ModularMCLib/MixinSplice/tree/main) | `1.21.1` | `21` | [![CI (main)](https://img.shields.io/github/actions/workflow/status/ModularMCLib/MixinSplice/auto-build.yml?branch=main&style=flat-square)](https://github.com/ModularMCLib/MixinSplice/actions/workflows/auto-build.yml?query=branch%3Amain) | [![Latest Maven version](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fmaven.fury.io%2Fmodularmclib%2Fcom%2Fmodularmclib%2Fmixinsplice%2Fmixinsplice-common%2Fmaven-metadata.xml&style=flat-square)](https://maven.fury.io/modularmclib/com/modularmclib/mixinsplice/mixinsplice-common/maven-metadata.xml) | [开发快照 / Snapshot](https://github.com/ModularMCLib/MixinSplice/releases/tag/latest-main) |
+
+Maven 徽章显示 [ModularMCLib Maven](https://maven.fury.io/modularmclib/) 上共享库的最新版本。平台制品使用相同版本号。
+
+The Maven badge shows the latest common library version in [ModularMCLib Maven](https://maven.fury.io/modularmclib/). The platform artifacts use the same version.
 
 ## 简体中文
 
