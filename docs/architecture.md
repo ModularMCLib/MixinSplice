@@ -75,6 +75,12 @@ Fabric 的 `:loader:fabric:runGameTestServer` 使用 Loom 的生产服务端任�
 
 PR 的 CI 依次启动 Fabric 服务端、Forge 服务端和 NeoForge GameTest 服务端，最后执行 `:tests:test`。四项结果共同决定 PR 的测试标签和作业状态。
 
+## 发布与维护分支
+
+`main` 跟随 MixinSplice 的最新主版本。不兼容升级时，从升级前的提交切出 `N.x` 维护分支，按需回移修复。`N` 取 MixinSplice 的主版本号。正式发布使用完整版本号作为标签。
+
+CurseForge 发布需要 GitHub Actions 变量 `CURSEFORGE_ID` 和密钥 `CURSEFORGE_TOKEN`。各加载器的 Minecraft 版本清单随相应发行线的发布配置维护。
+
 ## 上游参考
 
 MixinSplice 按现有模块和公开契约重新实现以下能力。

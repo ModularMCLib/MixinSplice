@@ -32,11 +32,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: refs/tags/${{ inputs.tag-name }}
       - name: Setup Build
         uses: ./.github/actions/build_setup
         with:
-          ref: ${{ inputs.branch }}
+          ref: refs/tags/${{ inputs.tag-name }}
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Get Version
@@ -78,6 +78,98 @@ jobs:
           files: ./*.jar
           fail_on_unmatched_files: true
 
+  publish-cf:
+    name: Publish to CurseForge (${{ matrix.loader }})
+    needs: build
+    if: ${{ !inputs.simulate }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - loader: fabric
+            java: |
+              21
+              25
+            game-versions: |
+              1.21
+              1.21.1
+              1.21.2
+              1.21.3
+              1.21.4
+              1.21.5
+              1.21.6
+              1.21.7
+              1.21.8
+              1.21.9
+              1.21.10
+              1.21.11
+              26.1
+              26.1.1
+              26.1.2
+              26.2
+              26.3
+          - loader: forge
+            java: '21'
+            # Forge 没有为 1.21.2 发布版本。当前平台包的 Forge 上限为 62 独占。
+            game-versions: |
+              1.21
+              1.21.1
+              1.21.3
+              1.21.4
+              1.21.5
+              1.21.6
+              1.21.7
+              1.21.8
+              1.21.9
+              1.21.10
+              1.21.11
+          - loader: neoforge
+            java: |
+              21
+              25
+            game-versions: |
+              1.21.1
+              1.21.2
+              1.21.3
+              1.21.4
+              1.21.5
+              1.21.6
+              1.21.7
+              1.21.8
+              1.21.9
+              1.21.10
+              1.21.11
+              26.1
+              26.1.1
+              26.1.2
+              26.2
+              26.3
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ inputs.tag-name }}
+      - name: Publish Mod
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          curseforge-id: ${{ vars.CURSEFORGE_ID }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          # 各平台包已内嵌共享库。
+          curseforge-dependencies: ''
+          files: ./mixinsplice-${{ matrix.loader }}-${{ needs.build.outputs.ver }}.jar
+          name: 'MixinSplice ${{ needs.build.outputs.ver }} (${{ matrix.loader }})'
+          version: ${{ needs.build.outputs.ver }}
+          version-type: beta
+          changelog: ${{ inputs.release-body }}
+          environment: client | server
+          loaders: ${{ matrix.loader }}
+          game-versions: ${{ matrix.game-versions }}
+          java: ${{ matrix.java }}
+          fail-mode: fail
+
   # 发布成功后，通过 PR 更新版本号和变更日志。
   bump-version-and-changelog:
     name: Bump Version and Build Changelog
@@ -87,26 +179,32 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    env:
+      RELEASE_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: refs/heads/${{ env.RELEASE_BRANCH }}
       - name: Bump Version
+        env:
+          RELEASE_VERSION: ${{ needs.build.outputs.ver }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git switch -C gh/release-${{ inputs.branch }}
-          BUMPED=$(echo ${{ needs.build.outputs.ver }} | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
-          sed -i "s/= ${{ needs.build.outputs.ver }}/= ${BUMPED}/" gradle.properties
+          git switch -C "gh/release-${RELEASE_BRANCH}"
+          BUMPED=$(echo "$RELEASE_VERSION" | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          sed -i "s/^mod_version = ${RELEASE_VERSION}$/mod_version = ${BUMPED}/" gradle.properties
           git commit -am "Bump version to ${BUMPED}"
       - name: Prepend to CHANGELOG
         if: inputs.changelog-body
+        env:
+          CHANGELOG_BODY: ${{ inputs.changelog-body }}
         run: |
-          { head -n 2 CHANGELOG.md; echo -e "${{ inputs.changelog-body }}"; tail -n +3 CHANGELOG.md; } > temp.md && mv temp.md CHANGELOG.md
+          { head -n 2 CHANGELOG.md; printf '%s\n' "$CHANGELOG_BODY"; tail -n +3 CHANGELOG.md; } > temp.md && mv temp.md CHANGELOG.md
           git commit -am "Updated CHANGELOG"
       - name: Push and PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git push --force --set-upstream origin gh/release-${{ inputs.branch }}
-          gh pr create -B ${{ inputs.branch }} -H gh/release-${{ inputs.branch }} --title "RELEASE for ${{ inputs.branch }} [no-snapshot]" --body "Created by GH Workflow" --label "ignore changelog"
+          git push --force --set-upstream origin "gh/release-${RELEASE_BRANCH}"
+          gh pr create -B "$RELEASE_BRANCH" -H "gh/release-${RELEASE_BRANCH}" --title "RELEASE for ${RELEASE_BRANCH} [no-snapshot]" --body "Created by GH Workflow" --label "ignore changelog"
