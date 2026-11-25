@@ -2,7 +2,7 @@ name: Latest Build
 
 on:
   push:
-    branches: ['main']
+    branches: ['main', '[0-9]+.x']
     paths: ['**/src/**', '**/*.gradle', 'gradle.properties', 'gradle/**', 'gradlew*']
 
 concurrency:
@@ -27,6 +27,8 @@ jobs:
           fetch-depth: 0 # Spotless 的 ratchetFrom 需要完整提交历史。
       - name: Setup Build
         uses: ./.github/actions/build_setup
+        with:
+          ref: ${{ github.sha }}
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Get Mod Version
@@ -55,22 +57,23 @@ jobs:
           retention-days: 90
       - name: Changelog
         id: changelog
-        if: ${{ env.PUBLISH == 'true' }}
+        if: ${{ env.PUBLISH == 'true' && !github.event.created }}
         uses: mikepenz/release-changelog-builder-action@v5
         with:
           configuration: "./.github/json/config-latest.json"
-          toTag: ${{ github.ref }}
+          fromTag: ${{ github.event.before }}
+          toTag: ${{ github.sha }}
           fetchViaCommits: true
           failOnError: false
       - name: Release Latest
         if: ${{ env.PUBLISH == 'true' }}
         uses: andelf/nightly-release@46e2d5f80828ecc5c2c3c819eb31186a7cf2156c
         with:
-          tag_name: latest
+          tag_name: latest-${{ github.ref_name }}
           name: 'MixinSplice ${{ steps.ver.outputs.version }} SNAPSHOT ${{ env.VERSION_SUFFIX }}'
           prerelease: true
           body: |
-            The latest build of MixinSplice for Fabric, Forge, and NeoForge.
+            The latest build of MixinSplice from `${{ github.ref_name }}` for Fabric, Forge, and NeoForge.
             Please report any [issues](${{ github.server_url }}/${{ github.repository }}/issues).
             ${{ steps.changelog.outputs.changelog }}
           files: build/libs/*.jar

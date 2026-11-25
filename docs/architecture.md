@@ -19,7 +19,7 @@ MixinSplice 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 
 `:core` 将 API、实现和 javac 插件打进 `mixinsplice-common`。三平台都引用 `:core` 的 `commonElements`。Fabric 通过 Loom 的 `include` 把共享库嵌入 `META-INF/jars/`，Loom 生成 `fabric.mod.json` 的 `jars` 声明。共享库的 Fabric ID 为 `mixinsplice_common`。Forge 通过 Forge JarJar 插件打包，NeoForge 通过 NeoGradle 打包，两者用 `jarJar` 依赖把共享库放进 `META-INF/jarjar/` 并生成元数据。共享库的 Manifest 声明 `FMLModType: GAMELIBRARY`，供 Forge 和 NeoForge 将它载入游戏层。
 
-初始化配置 `mixinsplice.mixins.json` 随平台包分发。Fabric 在 `fabric.mod.json` 中声明 `mixins`，Forge 在 Manifest 中声明 `MixinConfigs`，NeoForge 在 `neoforge.mods.toml` 中声明 `[[mixins]]`。Forge 和 NeoForge 使用 `lowcodefml` 注册平台模组。共享库提供配置中的插件类 `MixinSpliceConfigPlugin`。配置的 `package` 为 `core.mixins`，让 Mixin 将该包前缀留给 Mixin 类，插件及运行时类位于 `core.mixin`。
+初始化配置 `mixinsplice.mixins.json` 随平台包分发。Fabric 在 `fabric.mod.json` 中声明 `mixins`，Forge 在 Manifest 中声明 `MixinConfigs`，NeoForge 在 `neoforge.mods.toml` 中声明 `[[mixins]]`。Forge 使用 `lowcodefml` 注册平台模组，NeoForge 使用 `javafml` 并保留 FML 版本下限。共享库提供配置中的插件类 `MixinSpliceConfigPlugin`。配置的 `package` 为 `core.mixins`，让 Mixin 将该包前缀留给 Mixin 类，插件及运行时类位于 `core.mixin`。
 
 消费方通过自己的平台元数据注册自己的 `mixins.json`。平台包作为独立 Mod 安装或作为消费方的 Jar-in-Jar 依赖加载时，都会自动注册 MixinSplice 的初始化配置。
 
@@ -74,6 +74,14 @@ JVM 测试验证条件求值、扩展排序和副本字节码。三平台运行�
 Fabric 的 `:loader:fabric:runGameTestServer` 使用 Loom 的生产服务端任务加载发行包和测试模组，在 `--initSettings` 阶段执行断言。Forge 的 `:loader:forge:runTestGameTestServer` 使用 ForgeGradle 的 `gameTestServer` 配置加载 JarJar 发行包与测试模组，由测试模组的 `@GameTest` 调用共享断言。Forge 和 NeoForge 从测试夹具读取同一个 `mixinsplice:empty` 结构模板。
 
 PR 的 CI 依次启动 Fabric 服务端、Forge 服务端和 NeoForge GameTest 服务端，最后执行 `:tests:test`。四项结果共同决定 PR 的测试标签和作业状态。
+
+## 发布与维护分支
+
+`main` 跟随 MixinSplice 的最新主版本。不兼容升级时，从升级前的提交切出 `N.x` 维护分支，按需回移修复。`N` 取 MixinSplice 的主版本号。创建正式 Release 时，从对应的 `main` 或 `N.x` 创建完整版本号标签。版本更新 PR 指向 Release 记录的目标分支。
+
+推送源码或 Gradle 配置到 `main` 和 `N.x` 时，CI 构建该次推送的提交。GitHub 快照标签使用 `latest-分支名`，例如 `latest-main` 和 `latest-1.x`。快照变更日志使用本次推送的提交范围。
+
+CurseForge 发布需要 GitHub Actions 变量 `CURSEFORGE_ID` 和密钥 `CURSEFORGE_TOKEN`。各加载器的 Minecraft 版本清单随相应发行线的发布配置维护。
 
 ## 上游参考
 
