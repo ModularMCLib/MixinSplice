@@ -19,7 +19,7 @@ MixinSplice 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 
 `:core` 将 API、实现和 javac 插件打进 `mixinsplice-common`。三平台都引用 `:core` 的 `commonElements`。Fabric 通过 Loom 的 `include` 把共享库嵌入 `META-INF/jars/`，Loom 生成 `fabric.mod.json` 的 `jars` 声明。共享库的 Fabric ID 为 `mixinsplice_common`。Forge 通过 Forge JarJar 插件打包，NeoForge 通过 NeoGradle 打包，两者用 `jarJar` 依赖把共享库放进 `META-INF/jarjar/` 并生成元数据。共享库的 Manifest 声明 `FMLModType: GAMELIBRARY`，供 Forge 和 NeoForge 将它载入游戏层。
 
-初始化配置 `mixinsplice.mixins.json` 随平台包分发。Fabric 在 `fabric.mod.json` 中声明 `mixins`，Forge 在 Manifest 中声明 `MixinConfigs`，NeoForge 在 `neoforge.mods.toml` 中声明 `[[mixins]]`。Forge 和 NeoForge 使用 `lowcodefml` 注册平台模组。共享库提供配置中的插件类 `MixinSpliceConfigPlugin`。配置的 `package` 为 `core.mixins`，让 Mixin 将该包前缀留给 Mixin 类，插件及运行时类位于 `core.mixin`。
+初始化配置 `mixinsplice.mixins.json` 随平台包分发。Fabric 在 `fabric.mod.json` 中声明 `mixins`，Forge 在 Manifest 中声明 `MixinConfigs`，NeoForge 在 `neoforge.mods.toml` 中声明 `[[mixins]]`。Forge 使用 `lowcodefml` 注册平台模组，NeoForge 使用 `javafml` 并保留 FML 版本下限。共享库提供配置中的插件类 `MixinSpliceConfigPlugin`。配置的 `package` 为 `core.mixins`，让 Mixin 将该包前缀留给 Mixin 类，插件及运行时类位于 `core.mixin`。
 
 消费方通过自己的平台元数据注册自己的 `mixins.json`。平台包作为独立 Mod 安装或作为消费方的 Jar-in-Jar 依赖加载时，都会自动注册 MixinSplice 的初始化配置。
 
