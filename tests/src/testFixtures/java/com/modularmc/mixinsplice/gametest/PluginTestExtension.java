@@ -17,7 +17,7 @@ import java.util.Set;
 
 public final class PluginTestExtension implements SpliceExtension {
 
-    private static final String TEST_MIXIN_PACKAGE = "com.modularmclib.mixinsplice.gametest.plugin.";
+    private static final String TEST_MIXIN_PACKAGE = "com.modularmc.mixinsplice.gametest.plugin.";
 
     @Override
     public String id() {

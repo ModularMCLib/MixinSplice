@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"minVersion": "0.8.7",
-	"package": "com.modularmclib.mixinsplice.gametest.plugin",
+	"package": "com.modularmc.mixinsplice.gametest.plugin",
 	"plugin": "com.modularmc.mixinsplice.gametest.PluginMixins",
 	"compatibilityLevel": "JAVA_21",
 	"injectors": {

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(TransformationTarget.class)
 abstract class HandlerMixin {
 
-    @TargetHandler(mixin = "mixins.com.modularmc.mixinsplice.gametest.OriginMixin",
+    @TargetHandler(mixin = "com.modularmc.mixinsplice.gametest.mixins.OriginMixin",
                    config = "mixinsplice.gametest.mixins.json",
                    prefix = "handler",
                    name = "changeHandler(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V")
@@ -21,7 +21,7 @@ abstract class HandlerMixin {
         result.setReturnValue(42);
     }
 
-    @TargetHandler(mixin = "mixins.com.modularmc.mixinsplice.gametest.OriginMixin", name = "changeHandler", print = true)
+    @TargetHandler(mixin = "com.modularmc.mixinsplice.gametest.mixins.OriginMixin", name = "changeHandler", print = true)
     @Inject(method = "@mixinsplice:handler", at = @At("RETURN"), require = 0, expect = 0)
     private void printCandidates(CallbackInfoReturnable<Integer> result, CallbackInfo info) {
         throw new AssertionError("输出候选时不应注入");

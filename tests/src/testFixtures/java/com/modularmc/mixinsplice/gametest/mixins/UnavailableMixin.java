@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Conditional(require = @ConditionSpec("mixinsplice_missing_gametest_mod"))
-@CancelMixins("mixins.com.modularmc.mixinsplice.gametest.HandlerMixin")
+@CancelMixins("com.modularmc.mixinsplice.gametest.mixins.HandlerMixin")
 @Mixin(TransformationTarget.class)
 abstract class UnavailableMixin {
 

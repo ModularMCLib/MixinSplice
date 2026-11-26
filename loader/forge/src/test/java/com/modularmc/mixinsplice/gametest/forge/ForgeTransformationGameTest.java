@@ -1,6 +1,6 @@
 package com.modularmc.mixinsplice.gametest.forge;
 
-import com.modularmclib.mixinsplice.gametest.RuntimeAssertions;
+import com.modularmc.mixinsplice.gametest.RuntimeAssertions;
 
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;

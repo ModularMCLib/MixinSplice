@@ -53,12 +53,12 @@ abstract class CompatibilityMixin {}
 
 ### Gradle 依赖
 
-Maven 分组为 `com.modularmclib.mixinsplice`。编译时使用 `mixinsplice-common`。使用 Mixin 注解处理器为 `@TargetHandler` 生成 Refmap 时，再把同一个制品加入 `annotationProcessor`。其中的 javac 插件会在 Mixin 注解处理开始前注册 Handler 选择器，并沿用项目的 Mixin 映射配置。
+Maven 分组为 `com.modularmc.mixinsplice`。编译时使用 `mixinsplice-common`。使用 Mixin 注解处理器为 `@TargetHandler` 生成 Refmap 时，再把同一个制品加入 `annotationProcessor`。其中的 javac 插件会在 Mixin 注解处理开始前注册 Handler 选择器，并沿用项目的 Mixin 映射配置。
 
 ```groovy
 dependencies {
-    compileOnly "com.modularmclib.mixinsplice:mixinsplice-common:${mixinsplice_version}"
-    annotationProcessor "com.modularmclib.mixinsplice:mixinsplice-common:${mixinsplice_version}"
+    compileOnly "com.modularmc.mixinsplice:mixinsplice-common:${mixinsplice_version}"
+    annotationProcessor "com.modularmc.mixinsplice:mixinsplice-common:${mixinsplice_version}"
 }
 ```
 
@@ -128,12 +128,12 @@ abstract class CompatibilityMixin {}
 
 ### Gradle dependencies
 
-The Maven group is `com.modularmclib.mixinsplice`. Use `mixinsplice-common` for compilation. If you use the Mixin annotation processor to generate a Refmap for `@TargetHandler`, also add the same artifact to `annotationProcessor`. Its javac plugin registers the handler selector before Mixin annotation processing and uses your project's existing Mixin mappings.
+The Maven group is `com.modularmc.mixinsplice`. Use `mixinsplice-common` for compilation. If you use the Mixin annotation processor to generate a Refmap for `@TargetHandler`, also add the same artifact to `annotationProcessor`. Its javac plugin registers the handler selector before Mixin annotation processing and uses your project's existing Mixin mappings.
 
 ```groovy
 dependencies {
-    compileOnly "com.modularmclib.mixinsplice:mixinsplice-common:${mixinsplice_version}"
-    annotationProcessor "com.modularmclib.mixinsplice:mixinsplice-common:${mixinsplice_version}"
+    compileOnly "com.modularmc.mixinsplice:mixinsplice-common:${mixinsplice_version}"
+    annotationProcessor "com.modularmc.mixinsplice:mixinsplice-common:${mixinsplice_version}"
 }
 ```
 

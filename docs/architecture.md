@@ -63,7 +63,7 @@ MixinSplice 是 SpongePowered Mixin 的扩展。动态目标、跨 Mixin 注入�
 
 ## 程序化扩展
 
-通过 `META-INF/services/com.modularmclib.mixinsplice.api.extension.SpliceExtension` 注册提供者。`ExtensionRegistry` 使用 `before` 和 `after` 排序，排序规则对已发现的扩展 ID 生效，重复 ID 或循环依赖会在初始化时报错。
+通过 `META-INF/services/com.modularmc.mixinsplice.api.extension.SpliceExtension` 注册提供者。`ExtensionRegistry` 使用 `before` 和 `after` 排序，排序规则对已发现的扩展 ID 生效，重复 ID 或循环依赖会在初始化时报错。
 
 `MixinCanceller` 按目标判断是否取消 Mixin。`AnnotationTransformation` 提供类或方法的只读注解视图，可通过返回新的列表添加、修改、替换和删除注解。`InjectionAnnotation` 提供对选择器、计数、注入点和选择范围的类型化编辑。自定义条件和目标提供者也可通过注册 ID 从声明式注解引用。
 

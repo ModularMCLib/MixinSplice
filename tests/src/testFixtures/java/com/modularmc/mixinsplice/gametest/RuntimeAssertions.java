@@ -21,7 +21,7 @@ public final class RuntimeAssertions {
         var queries = ConditionQueries.get();
         String version = queries.modVersion("minecraft").orElseThrow();
         assertTrue(queries.matchesVersion(version, "1.21.x"), "应能使用当前平台的版本谓词查询");
-        String mixin = "com.modularmclib.mixinsplice.gametest.mixins.OptionalTargetMixin";
+        String mixin = "com.modularmc.mixinsplice.gametest.mixins.OptionalTargetMixin";
         assertTrue(queries.check(TransformationTarget.class.getName(), mixin).allowed(), "主动查询应允许存在的目标");
         assertTrue(!queries.shouldApply("example.missing.ConditionalTarget", mixin,
                 reason -> assertTrue(reason.contains("ExistingTargetCondition"), "应报告拒绝目标的条件")), "主动查询应拒绝缺失的目标");

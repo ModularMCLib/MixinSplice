@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"minVersion": "0.8.7",
-	"package": "com.modularmclib.mixinsplice.core.mixins",
+	"package": "com.modularmc.mixinsplice.core.mixins",
 	"plugin": "com.modularmc.mixinsplice.core.mixin.MixinSpliceConfigPlugin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [],

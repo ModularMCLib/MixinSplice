@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Conditional(require = @ConditionSpec(value = "minecraft", versions = { ">=1.22", "1.21.x" }))
-@CancelMixins("mixins.com.modularmc.mixinsplice.gametest.CancelledMixin")
-@AdjustInjection(mixin = "mixins.com.modularmc.mixinsplice.gametest.AdjustedMixin", handler = "changeAdjusted", method = "originalValue")
-@AdjustInjection(mixin = "mixins.com.modularmc.mixinsplice.gametest.AdjustedMixin",
+@CancelMixins("com.modularmc.mixinsplice.gametest.mixins.CancelledMixin")
+@AdjustInjection(mixin = "com.modularmc.mixinsplice.gametest.mixins.AdjustedMixin", handler = "changeAdjusted", method = "originalValue")
+@AdjustInjection(mixin = "com.modularmc.mixinsplice.gametest.mixins.AdjustedMixin",
                  handler = "changeAdjusted",
                  target = @Desc(value = "adjustedValue", ret = int.class))
-@AdjustInjection(mixin = "mixins.com.modularmc.mixinsplice.gametest.AdjustedMixin",
+@AdjustInjection(mixin = "com.modularmc.mixinsplice.gametest.mixins.AdjustedMixin",
                  handler = "changeOrdinal",
                  at = @At("RETURN"),
                  slice = @Slice(from = @At("HEAD"), to = @At("TAIL")),

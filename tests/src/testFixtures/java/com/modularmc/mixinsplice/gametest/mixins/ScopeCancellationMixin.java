@@ -5,6 +5,6 @@ import com.modularmc.mixinsplice.gametest.target.ScopeTarget.Cancelled;
 
 import org.spongepowered.asm.mixin.Mixin;
 
-@CancelMixins("mixins.com.modularmc.mixinsplice.gametest.ScopeMixin")
+@CancelMixins("com.modularmc.mixinsplice.gametest.mixins.ScopeMixin")
 @Mixin(Cancelled.class)
 abstract class ScopeCancellationMixin {}
