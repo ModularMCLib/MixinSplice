@@ -1,5 +1,3 @@
-import org.gradle.jvm.tasks.Jar
-
 def fabric = project.name == 'fabric'
 def forge = project.name == 'forge'
 if (forge) {
