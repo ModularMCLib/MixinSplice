@@ -4,7 +4,9 @@
 	"version": "1",
 	"environment": "server",
 	"entrypoints": {
-		"server": ["com.modularmclib.mixinsplice.gametest.FabricRuntimeTestMod"]
+		"server": [
+          "com.modularmc.mixinsplice.gametest.FabricRuntimeTestMod"
+        ]
 	},
 	"mixins": [
 		"mixinsplice.gametest.mixins.json",
