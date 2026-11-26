@@ -33,9 +33,14 @@ jobs:
         run: chmod +x gradlew
       - name: Get Mod Version
         id: ver
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           version=$(./gradlew -q --configure-on-demand :printVersion)
           printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          if git grep -qE "^mod_version[[:space:]]*=[[:space:]]*${version%%.*}\." "$BEFORE_SHA" -- gradle.properties 2>/dev/null; then
+            printf 'same-major=true\n' >> "$GITHUB_OUTPUT"
+          fi
       - name: Version Suffix
         id: suffix
         run: echo "VERSION_SUFFIX=$(echo "${{ github.sha }}" | cut -c 1-7)" >> $GITHUB_ENV
@@ -57,7 +62,7 @@ jobs:
           retention-days: 90
       - name: Changelog
         id: changelog
-        if: ${{ env.PUBLISH == 'true' && !github.event.created }}
+        if: ${{ env.PUBLISH == 'true' && steps.ver.outputs.same-major == 'true' }}
         uses: mikepenz/release-changelog-builder-action@v5
         with:
           configuration: "./.github/json/config-latest.json"

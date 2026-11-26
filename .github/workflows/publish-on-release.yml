@@ -17,15 +17,28 @@ jobs:
       - name: Get Config
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: refs/tags/${{ github.ref_name }}
+          fetch-depth: 0
           sparse-checkout: '.github/json'
+      - name: Find previous tag in the same major version
+        id: previous
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version=${RELEASE_TAG#v}
+          major=${version%%.*}
+          previous=$(git describe --tags --abbrev=0 --match "$major.[0-9]*.[0-9]*" --match "v$major.[0-9]*.[0-9]*" --exclude '*-*' --exclude "$version" --exclude "v$version" 2>/dev/null || true)
+          printf 'tag=%s\n' "$previous" >> "$GITHUB_OUTPUT"
       - name: Generate changelog
         id: changelog
+        if: steps.previous.outputs.tag != ''
         env:
           GITHUB_TOKEN: ${{ github.token }}
         uses: mikepenz/release-changelog-builder-action@v5
         with:
           configuration: './.github/json/config.json'
+          fromTag: ${{ steps.previous.outputs.tag }}
+          toTag: ${{ github.ref_name }}
           ignorePreReleases: true
           fetchViaCommits: true
           failOnError: true
@@ -36,7 +49,7 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/publish.yml
     with:
-      simulate: ${{ startsWith(github.event.release.name, 'simulate') || github.repository != 'ModularMCLib/MixinSplice' }}
+      simulate: ${{ startsWith(github.event.release.name, 'simulate') || github.repository_owner != 'ModularMCLib' }}
       tag-name: ${{ github.ref_name }}
       release-body: ${{ github.event.release.body }}
       changelog-body: ${{ needs.meta.outputs.CHANGELOG }}
